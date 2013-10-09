@@ -1,0 +1,300 @@
+### About Phystrix
+
+In distributed systems with PHP frontend, application talks to a number of remote services. Be it a set of services of your own, a 3rd party RESTful API or a legacy component that requires networking interaction: in complex, high-load systems occasional failure cannot be avoided.
+
+Phystrix protects the points of access to remote resources by keeping track of various metrics and preventing repetitive failures.
+
+In case of a service failing way too often, to not make the situation worse, Phystrix will temporarily stop issuing requests to it. When the service comes back to life, Phystrix allows the client application to access it again.
+
+### Understanding Phystrix
+
+Not only Phystrix was heavily inspired by the amazing [Hystrix library](https://github.com/Netflix/Hystrix) for Java by Netflix, it also attempts to follow the of the best practices set by the library. You will notice that configuration parameters are the same as well as much of how it works internally.
+
+Even though there is not much available at the moment in terms of documentation for Phystrix, you can also use [Hystrix wiki](https://github.com/Netflix/Hystrix/wiki) as an additional source of information, to understand how something works etc.
+
+## Installation
+
+Recommended way to install Phystrix is by using [Composer](https://getcomposer.org):
+
+```javascript
+"require": {
+     "odesk/phystrix": "dev-master"
+}
+```
+
+To store and share metrics between requests, Phystrix uses [APC](http://php.net/manual/en/book.apc.php), so make sure you have the PHP extension enabled.
+
+## Usage
+
+To protect a point of access to remote service, we use the [command pattern](http://en.wikipedia.org/wiki/Command_pattern). Here is how a minimal implementation could look like:
+
+```php
+use Odesk\Phystrix\AbstractCommand;
+
+/**
+ * All commands must extends Phystrix's AbstractCommand
+ */
+class MyCommand extends AbstractCommand
+{
+    protected $name;
+
+    public function __construct($name)
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * This function is called internally by Phystrix, only if the request is allowed
+     *
+     * @return mixed
+     */
+    protected function run()
+    {
+        return 'Hello ' . $this->name;
+    }
+}
+```
+
+To have the command preconfigured with Phystrix-specific dependencies, you need to obtain it from a special factory that you share with your objects. For instance, in your controller you would do:
+
+```php
+$myCommand = $phystrix->getCommand('MyCommand', 'Alex'); // 'Alex' is passed to MyCommand's constructor
+$result = $myCommand->execute();
+```
+
+Notice, the extra parameters you pass to the factory’s getCommand method are forwarded to the command’s constructor.
+
+The factory is instantiated as follows:
+
+```php
+use Zend\Config\Config;
+use Odesk\Phystrix\ApcStateStorage;
+use Odesk\Phystrix\CircuitBreakerFactory;
+use Odesk\Phystrix\CommandMetricsFactory;
+use Odesk\Phystrix\CommandFactory;
+
+$config = new Config(require 'phystrix-config.php');
+
+$stateStorage = new ApcStateStorage();
+$circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
+$commandMetricsFactory = new CommandMetricsFactory($stateStorage);
+
+$phystrix = new CommandFactory(
+    $config, \Zend\Di\ServiceLocator(), $circuitBreakerFactory,
+    $commandMetricsFactory, new \Odesk\Phystrix\RequestCache()
+);
+```
+
+The way you store the configuration files is up to you. Phystrix relies on [Zend\Config](https://github.com/zendframework/Component_ZendConfig)  to manage configurations. In this case, __phystrix-config.php__ is a PHP array:
+
+```php
+return array(
+    'default' => array( // Default command configuration
+        'fallback' => array(
+            'enabled' => true,
+        ),
+        'circuitBreaker' => array(
+            'enabled' => true,
+            'errorThresholdPercentage' => 50,
+            'forceOpen' => false,
+            'forceClosed' => false,
+            'requestVolumeThreshold' => 10,
+            'sleepWindowInMilliseconds' => 5000,
+        ),
+        'metrics' => array(
+            'healthSnapshotIntervalInMilliseconds' => 1000,
+            'rollingStatisticalWindowInMilliseconds' => 1000,
+            'rollingStatisticalWindowBuckets' => 10,
+        ),
+        'requestCache' => array(
+            'enabled' => true,
+        ),
+        'requestLog' => array(
+            // TODO implement
+            'enabled' => false,
+        ),
+    ),
+    'MyCommand' => array( // Command specific configuration
+        'fallback' => array(
+            'enabled' => false
+        )
+    )
+);
+```
+
+Command-specific configurations are merged with the default one on instantiation. “MyCommand” in this case is the command key. By default it is the same as command’s class, but you can set it yourself by overriding the __getCommandKey__ protected method:
+
+```php
+    /**
+     * This function defines the command key to use for this command
+     *
+     * @return string
+     */
+    protected function getCommandKey()
+    {
+        return 'CustomCommandKey';
+    }
+```
+
+Phystrix only works with the command keys. If you have two different commands with the same command key - Phystrix will collect metrics, disable and enable requests, as for a single entity. This may be used for grouping commands.
+
+Sometimes, you may need to change a parameter when a command is used in a particular context:
+
+```php
+use Zend\Config\Config;
+$myCommand = $phystrix->getCommand('MyCommand', 'Alex');
+$myCommand->setConfig(new Config(array('requestCache' => array('enabled' => false))));
+$result = $myCommand->execute();
+```
+
+Note, the config you set is merged with the previously set value.
+
+## Features
+
+### Fallback
+
+For a command, you can specify fallback logic, that will be executed in case of a failure, or when the remote service is blocked:
+
+```php
+class GetAvatarUrlCommand extends AbstractCommand
+{
+    protected $user;
+
+    public function __construct($user)
+    {
+        $this->user = $user;
+    }
+
+    protected function run()
+    {
+        $remoteAvatarService = $this->serviceLocator->get('avatarService');
+        return $remoteAvatarService->getUrlByUser($this->user);
+    }
+
+    /**
+     * When __run__ fails for some reason, or when Phystrix doesn't allow the request in the first place,
+     * this function result will be returned instead
+     *
+     * @return string
+     */
+    protected function getFallback()
+    {
+        // we failed getting user's picture, so showing a generic no-photo placeholder instead.
+        return 'http://example/avatars/no-photo.jpg';
+    }
+}
+```
+
+If you want to use logic requiring networking for your fallback, make sure to “wrap” it into a Phystrix command of its own.
+
+### Request cache
+
+Request cache, when enabled, caches command execution result __within a single HTTP request__, so you don’t have to worry about loading data over network more than needed.
+
+Results are cached per command key per cache key. To define cache key generation logic, implement __getCacheKey__ protected method:
+
+```php
+    protected function getCacheKey()
+    {
+        return 'cache_' . $this->user;
+    }
+```
+
+### Timeout
+
+[Hystrix for Java](https://github.com/Netflix/Hystrix) allows you to set specific time a command is allowed to run. What it does is it limits the time for the thread a command is running in. In PHP we cannot do that, however, as we only have the context of one, current, thread.
+
+Suggested approach is to manually configure the timeout in the library used to access the remote service.
+
+Let’s say you have this Phystrix configuration for MyCommand:
+
+```php
+    'MyCommand' => array(
+        'fallback' => array(
+            'enabled' => false
+        ),
+        'timeout' => 2000, // milliseconds
+    )
+```
+
+where “timeout” is a custom parameter which Phystrix does not make any use of. You can specify any arbitrary parameters in Phystrix configuration and they will be available for you in the commands:
+
+```php
+    protected function run()
+    {
+        $remoteAvatarService = $this->serviceLocator->get('avatarService');
+        return $remoteAvatarService->getUrlByUser($this->user);
+    }
+
+    /**
+     * Custom preparation logic, preceding command execution
+     */
+    protected function prepare()
+    {
+        $remoteAvatarService = $this->serviceLocator->get('avatarService');
+        if ($this->config->__isset('timeout')) {
+            // if the timeout is exceeded an exception will be thrown
+            $remoteAvatarService->setTimeout($this->config->get('timeout'));
+        }
+    }
+```
+
+where the client might be a 3rd library you downloaded, or an instance of http client from a framework such as Zend Framework or Symfony or something you wrote yourself.
+
+Of course, having to add this into each command would be suboptimal. Normally, you will have a set of abstract commands, specific to your use cases. E.g. you might have __GenericCurlCommand__ or __GenericGoogleApiCommand__ and __MyCommand__ would extend one of those.
+
+### Custom dependencies
+
+Since you get the commands from a special factory, you need a way to inject custom dependencies into your commands, such as an instance of HTTP client.
+
+One way would be to extend the __Odesk\Phystrix\CommandFactory__, create your own factory and have it inject what you need.
+
+Alternatively, configure the locator instance that __Odesk\Phystrix\CommandFactory__ accepts in the constructor.
+
+The service locator can be anything, implementing the very basic [Zend\Di\LocatorInterface](https://github.com/zendframework/zf2/blob/master/library/Zend/Di/LocatorInterface.php). You can inject an IoC container that will lazily instantiate instance as they are needed, or you can use a simpler, preconfigured, instance of __Zend\Di\ServiceLocator__:
+
+```php
+$serviceLocator = \Zend\Di\ServiceLocator();
+$googleApiRemoteService = new GoogleApi(...);
+$serviceLocator->set('googleApi', $googleApiRemoteService);
+
+$phystrix = new CommandFactory(
+    $config, $serviceLocator, $circuitBreakerFactory,
+    $commandMetricsFactory, new \Odesk\Phystrix\RequestCache()
+);
+```
+
+You can access the service locator from within your commands as follows:
+
+```php
+    protected function run()
+    {
+        $googleApi = $this->serviceLocator->get('googleApi');
+        return $googleApi->fetchAllEmail();
+    }
+```
+
+### Logger
+
+TBD
+
+
+### Hystrix Turbine and Dashboard Support
+
+TBD
+
+### Licence
+
+Copyright 2013-2014 oDesk Corporation. All Rights Reserved.
+
+Phystrix is licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

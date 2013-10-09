@@ -1,0 +1,5 @@
+<phpunit colors="true" bootstrap="./bootstrap.php">
+    <testsuite name="Odesk_Phystrix">
+        <directory>./Tests</directory>
+    </testsuite>
+</phpunit>

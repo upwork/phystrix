@@ -1,0 +1,19 @@
+{
+    "name": "odesk/phystrix",
+    "description": "Protocol agnostic library for latency and fault isolation",
+    "license": "Apache-2.0",
+    "keywords": [
+        "odesk",
+        "phystrix"
+    ],
+    "autoload": {
+        "psr-0": {
+            "Odesk\\": "library/"
+        }
+    },
+    "require": {
+        "php": ">=5.3.3",
+        "zendframework/zend-config": "2.2.3",
+        "zendframework/zend-di": "2.2.3"
+    }
+}
