@@ -8,7 +8,7 @@ In case of a service failing way too often, to not make the situation worse, Phy
 
 ### Understanding Phystrix
 
-Not only Phystrix was heavily inspired by the amazing [Hystrix library](https://github.com/Netflix/Hystrix) for Java by Netflix, it also attempts to follow the of the best practices set by the library. You will notice that configuration parameters are the same as well as much of how it works internally.
+Not only Phystrix was heavily inspired by the amazing [Hystrix library](https://github.com/Netflix/Hystrix) for Java by Netflix, it also attempts to follow the best practices set by the library. You will notice that configuration parameters are the same as well as much of how it works internally.
 
 Even though there is not much available at the moment in terms of documentation for Phystrix, you can also use [Hystrix wiki](https://github.com/Netflix/Hystrix/wiki) as an additional source of information, to understand how something works etc.
 
@@ -80,8 +80,8 @@ $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
 $commandMetricsFactory = new CommandMetricsFactory($stateStorage);
 
 $phystrix = new CommandFactory(
-    $config, \Zend\Di\ServiceLocator(), $circuitBreakerFactory,
-    $commandMetricsFactory, new \Odesk\Phystrix\RequestCache()
+    $config, new \Zend\Di\ServiceLocator(), $circuitBreakerFactory, $commandMetricsFactory,
+    new \Odesk\Phystrix\RequestCache(), new \Odesk\Phystrix\RequestLog()
 );
 ```
 
@@ -91,26 +91,38 @@ The way you store the configuration files is up to you. Phystrix relies on [Zend
 return array(
     'default' => array( // Default command configuration
         'fallback' => array(
+            // Whether fallback logic of the phystrix command is enabled
             'enabled' => true,
         ),
         'circuitBreaker' => array(
+            // Whether circuit breaker is enabled, if not Phystrix will always allow a request
             'enabled' => true,
+            // How many failed request it might be before we open the circuit (disallow consecutive requests)
             'errorThresholdPercentage' => 50,
+            // If true, the circuit breaker will always be open regardless the metrics
             'forceOpen' => false,
+            // If true, the circuit breaker will always be closed, allowing all requests, regardless the metrics
             'forceClosed' => false,
+            // How many requests we need minimally before we can start making decisions about service stability
             'requestVolumeThreshold' => 10,
+            // For how long to wait before attempting to access a failing service
             'sleepWindowInMilliseconds' => 5000,
         ),
         'metrics' => array(
+            // This is for caching metrics so they are not recalculated more often than needed
             'healthSnapshotIntervalInMilliseconds' => 1000,
+            // The period of time within which we the stats are collected
             'rollingStatisticalWindowInMilliseconds' => 1000,
+            // The more buckets the more precise and actual the stats and slower the calculation.
             'rollingStatisticalWindowBuckets' => 10,
         ),
         'requestCache' => array(
+            // Request cache, if enabled and a command has getCacheKey implemented
+            // caches results within current http request
             'enabled' => true,
         ),
         'requestLog' => array(
-            // TODO implement
+            // Request log collects all commands executed within current http request
             'enabled' => false,
         ),
     ),
@@ -274,10 +286,26 @@ You can access the service locator from within your commands as follows:
     }
 ```
 
-### Logger
+### Request Log
 
-TBD
+A useful feature for performance monitoring. When enabled, allows you to retrieve the list of commands executed during the current HTTP request:
 
+```php
+/** @var RequestLog $requestLog */
+$commands = $requestLog->getExecutedCommands();
+```
+
+What you get is an array of actual command instances. For each command you can get the execution time in milliseconds:
+
+```php
+$command->getExecutionTimeInMilliseconds();
+```
+
+and the list of events, such as "SUCCESS", "FAILURE", "TIMEOUT", "SHORT_CIRCUITED", "FALLBACK_SUCCESS", "FALLBACK_FAILURE", "EXCEPTION_THROWN", "RESPONSE_FROM_CACHE":
+
+```php
+$command->getExecutionEvents();
+```
 
 ### Hystrix Turbine and Dashboard Support
 
