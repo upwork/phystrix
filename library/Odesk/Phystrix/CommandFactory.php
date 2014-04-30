@@ -97,7 +97,9 @@ class CommandFactory
 
         $reflection = new ReflectionClass($class);
         /** @var AbstractCommand $command */
-        $command = $reflection->newInstanceArgs($parameters);
+        $command = empty($parameters) ?
+            $reflection->newInstance() :
+            $reflection->newInstanceArgs($parameters);
 
         $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
         $command->setCommandMetricsFactory($this->commandMetricsFactory);

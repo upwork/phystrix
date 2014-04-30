@@ -18,7 +18,7 @@
  */
 namespace Tests\Odesk\Phystrix;
 
-use Odesk\Phystrix\ApcStateStorage;
+use Odesk\Phystrix\ArrayStateStorage;
 use Odesk\Phystrix\CommandMetricsFactory;
 
 class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
@@ -32,7 +32,7 @@ class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
                 'healthSnapshotIntervalInMilliseconds' => 2000,
             )
         ));
-        $factory = new CommandMetricsFactory(new ApcStateStorage());
+        $factory = new CommandMetricsFactory(new ArrayStateStorage());
         $metrics = $factory->get('TestCommand', $config);
         $this->assertAttributeEquals(2000, 'healthSnapshotIntervalInMilliseconds', $metrics);
 
