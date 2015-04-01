@@ -21,7 +21,7 @@ namespace Odesk\Phystrix;
 use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
 use Odesk\Phystrix\Exception\RuntimeException;
-use Zend\Di\LocatorInterface;
+//use Zend\Di\LocatorInterface;
 use Zend\Config\Config;
 use Exception;
 
@@ -275,7 +275,7 @@ abstract class AbstractCommand
      *
      * @param LocatorInterface $serviceLocator
      */
-    public function setServiceLocator(LocatorInterface $serviceLocator)
+    public function setServiceLocator($serviceLocator)
     {
         $this->serviceLocator = $serviceLocator;
     }
