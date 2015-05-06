@@ -20,13 +20,13 @@ namespace Odesk\Phystrix;
 
 use ReflectionClass;
 use Zend\Config\Config;
-use Zend\Di\LocatorInterface;
+//use Zend\Di\LocatorInterface;
 
 /**
  * All commands must be created through this factory.
  * It injects all dependencies required for Circuit Breaker logic etc.
  */
-class CommandFactory
+class CommandFactory implements CommandFactoryInterface
 {
     /**
      * @var Config
@@ -70,7 +70,7 @@ class CommandFactory
      */
     public function __construct(
         Config $config,
-        LocatorInterface $serviceLocator,
+        $serviceLocator,
         CircuitBreakerFactory $circuitBreakerFactory,
         CommandMetricsFactory $commandMetricsFactory,
         RequestCache $requestCache,
@@ -85,10 +85,7 @@ class CommandFactory
     }
 
     /**
-     * Instantiates and configures a command
-     *
-     * @param string $class
-     * @return AbstractCommand
+     * {@inheritDoc}
      */
     public function getCommand($class)
     {
