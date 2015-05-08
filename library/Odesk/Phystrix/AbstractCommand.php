@@ -219,33 +219,32 @@ abstract class AbstractCommand
         if ($this->isRequestCacheEnabled()) {
             $fromCache = $this->requestCache->get($this->getCommandKey(), $this->getCacheKey());
             if ($fromCache !== null) {
-                $this->executionEvents[] = self::EVENT_RESPONSE_FROM_CACHE;
                 $metrics->markResponseFromCache();
+                $this->handleEvent(self::EVENT_RESPONSE_FROM_CACHE);
                 return $fromCache;
             }
         }
         $circuitBreaker = $this->getCircuitBreaker();
         if (!$circuitBreaker->allowRequest()) {
-            $this->executionEvents[] = self::EVENT_SHORT_CIRCUITED;
             $metrics->markShortCircuited();
+            $this->handleEvent(self::EVENT_SHORT_CIRCUITED);
             return $this->getFallbackOrThrowException();
         }
         $this->invocationStartTime = $this->getTimeInMilliseconds();
         try {
             $result = $this->run();
             $this->recordExecutionTime();
-            $this->executionEvents[] = self::EVENT_SUCCESS;
             $metrics->markSuccess();
             $circuitBreaker->markSuccess();
+            $this->handleEvent(self::EVENT_SUCCESS);
         } catch (BadRequestException $exception) {
             // Treated differently and allowed to propagate without any stats tracking or fallback logic
             $this->recordExecutionTime();
             throw $exception;
         } catch (Exception $exception) {
             $this->recordExecutionTime();
-            $this->executionException = $exception;
-            $this->executionEvents[] = self::EVENT_FAILURE;
             $metrics->markFailure();
+            $this->handleEvent(self::EVENT_FAILURE, $exception);
             $result = $this->getFallbackOrThrowException($exception);
         }
 
@@ -278,6 +277,23 @@ abstract class AbstractCommand
     public function setServiceLocator(LocatorInterface $serviceLocator)
     {
         $this->serviceLocator = $serviceLocator;
+    }
+
+
+    /**
+     * Records list of actions that have taken place, with their exceptions
+     *
+     * @param string    $eventName  type from class constants EVENT_*
+     * @param Exception $e          exception that was thrown as part of $eventName
+     */
+    protected function handleEvent($eventName, \Exception $e = null )
+    {
+        $this->executionEvents[] = $eventName;
+
+        if ($e) {
+            // TODO: since multiple events may take place, key this by event name
+            $this->executionException = $e;
+        }
     }
 
     /**
@@ -315,8 +331,8 @@ abstract class AbstractCommand
             if ($this->config->get('fallback')->get('enabled')) {
                 try {
                     $executionResult = $this->getFallback();
-                    $this->executionEvents[] = self::EVENT_FALLBACK_SUCCESS;
                     $metrics->markFallbackSuccess();
+                    $this->handleEvent(self::EVENT_FALLBACK_SUCCESS);
                     return $executionResult;
                 } catch (FallbackNotAvailableException $fallbackException) {
                     throw new RuntimeException(
@@ -325,8 +341,8 @@ abstract class AbstractCommand
                         $originalException
                     );
                 } catch (Exception $fallbackException) {
-                    $this->executionEvents[] = self::EVENT_FALLBACK_FAILURE;
                     $metrics->markFallbackFailure();
+                    $this->handleEvent(self::EVENT_FALLBACK_FAILURE);
                     throw new RuntimeException(
                         $message . ' and failed retrieving fallback',
                         get_class($this),
@@ -343,8 +359,8 @@ abstract class AbstractCommand
             }
         } catch (Exception $exception) {
             // count that we are throwing an exception and re-throw it
-            $this->executionEvents[] = self::EVENT_EXCEPTION_THROWN;
             $metrics->markExceptionThrown();
+            $this->handleEvent(self::EVENT_EXCEPTION_THROWN);
             throw $exception;
         }
     }
