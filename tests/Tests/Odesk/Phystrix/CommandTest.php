@@ -190,7 +190,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     /**
      * Ensure command does not break when configured to log, though one hasn't been injected
      *
-     * @dataProvider requestConfigBoolProvider
+     * @dataProvider configBoolProvider
      *
      * @param bool $log_enabled  whether config is set to use request log
      */
@@ -199,8 +199,9 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         // Duplicate some of the class setup in order to bypass requestLog generation
         $command = new CommandMock();
         $command->setCommandMetricsFactory($this->commandMetricsFactory);
-        $command->setRequestCache(new RequestCache());
         $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
+        $command->setRequestCache(new RequestCache());
+
         $command->setConfig(new \Zend\Config\Config(array(
             'requestLog' => array(
                 'enabled' => $log_enabled,
@@ -213,13 +214,40 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Ensure command does not break when configured to cache, though cache hasn't been injected
+     *
+     * @dataProvider configBoolProvider
+     *
+     * @param bool $cache_enabled  whether config is set to use request log
+     */
+    public function testRequestCacheNotInjected($cache_enabled) {
+
+        // Duplicate some of the class setup in order to bypass requestLog generation
+        $command = new CommandMock();
+        $command->setCommandMetricsFactory($this->commandMetricsFactory);
+        $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
+        $command->setRequestLog($this->requestLog);
+
+        $command->setConfig(new \Zend\Config\Config(array(
+            'requestCache' => array(
+                'enabled' => $cache_enabled,
+            ),
+        ), true));
+
+        $this->setUpCommonExpectations();
+
+        $this->assertEquals('run result', $this->command->execute());
+    }
+
+
+    /**
      * @return array
      */
-    public function requestConfigBoolProvider() {
+    public function configBoolProvider() {
 
         return [
-            'requestLog config enabled'  => [ true ],
-            'requestLog config disabled' => [ false ],
+            'config enabled'  => [ true ],
+            'config disabled' => [ false ],
         ];
     }
 

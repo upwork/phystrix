@@ -73,15 +73,15 @@ class CommandFactory
         LocatorInterface $serviceLocator,
         CircuitBreakerFactory $circuitBreakerFactory,
         CommandMetricsFactory $commandMetricsFactory,
-        RequestCache $requestCache,
+        RequestCache $requestCache = null,
         RequestLog $requestLog = null
     ) {
         $this->serviceLocator = $serviceLocator;
         $this->config = $config;
         $this->circuitBreakerFactory = $circuitBreakerFactory;
+        $this->commandMetricsFactory = $commandMetricsFactory;
         $this->requestCache = $requestCache;
         $this->requestLog = $requestLog;
-        $this->commandMetricsFactory = $commandMetricsFactory;
     }
 
     /**
@@ -105,7 +105,10 @@ class CommandFactory
         $command->setCommandMetricsFactory($this->commandMetricsFactory);
         $command->setServiceLocator($this->serviceLocator);
         $command->initializeConfig($this->config);
-        $command->setRequestCache($this->requestCache);
+
+        if ($this->requestCache) {
+            $command->setRequestCache($this->requestCache);
+        }
 
         if ($this->requestLog) {
             $command->setRequestLog($this->requestLog);
