@@ -428,7 +428,7 @@ abstract class AbstractCommand
      */
     private function recordExecutedCommand()
     {
-        if ($this->config->get('requestLog')->get('enabled')) {
+        if ($this->requestLog && $this->config->get('requestLog')->get('enabled') ) {
             $this->requestLog->addExecutedCommand($this);
         }
     }
