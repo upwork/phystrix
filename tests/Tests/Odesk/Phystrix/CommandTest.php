@@ -192,9 +192,9 @@ class CommandTest extends \PHPUnit_Framework_TestCase
      *
      * @dataProvider configBoolProvider
      *
-     * @param bool $log_enabled  whether config is set to use request log
+     * @param bool $logEnabled  whether config is set to use request log
      */
-    public function testRequestLogNotInjected($log_enabled) {
+    public function testRequestLogNotInjected($logEnabled) {
 
         // Duplicate some of the class setup in order to bypass requestLog generation
         $command = new CommandMock();
@@ -204,7 +204,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
 
         $command->setConfig(new \Zend\Config\Config(array(
             'requestLog' => array(
-                'enabled' => $log_enabled,
+                'enabled' => $logEnabled,
             ),
         ), true));
 
@@ -218,9 +218,9 @@ class CommandTest extends \PHPUnit_Framework_TestCase
      *
      * @dataProvider configBoolProvider
      *
-     * @param bool $cache_enabled  whether config is set to use request log
+     * @param bool $cacheEnabled  whether config is set to use request log
      */
-    public function testRequestCacheNotInjected($cache_enabled) {
+    public function testRequestCacheNotInjected($cacheEnabled) {
 
         // Duplicate some of the class setup in order to bypass requestLog generation
         $command = new CommandMock();
@@ -230,7 +230,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
 
         $command->setConfig(new \Zend\Config\Config(array(
             'requestCache' => array(
-                'enabled' => $cache_enabled,
+                'enabled' => $cacheEnabled,
             ),
         ), true));
 
@@ -246,8 +246,8 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function configBoolProvider() {
 
         return [
-            'config enabled'  => [ true ],
-            'config disabled' => [ false ],
+            'config enabled'  => array( true ),
+            'config disabled' => array( false ),
         ];
     }
 
