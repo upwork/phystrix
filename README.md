@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/odesk/phystrix.svg)](https://travis-ci.org/odesk/phystrix)
+
 ### About Phystrix
 
 In distributed systems with PHP frontend, application talks to a number of remote services. Be it a set of services of your own, a 3rd party RESTful API or a legacy component that requires networking interaction: in complex, high-load systems occasional failure cannot be avoided.
