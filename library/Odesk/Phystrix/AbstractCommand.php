@@ -199,6 +199,10 @@ abstract class AbstractCommand
      */
     private function isRequestCacheEnabled()
     {
+        if (!$this->requestCache) {
+            return false;
+        }
+
         return $this->config->get('requestCache')->get('enabled') && $this->getCacheKey() !== null;
     }
 
@@ -213,10 +217,13 @@ abstract class AbstractCommand
     {
         $this->prepare();
         $metrics = $this->getMetrics();
+        $cacheEnabled = $this->isRequestCacheEnabled();
+
         // always adding the command to request log
         $this->recordExecutedCommand();
+
         // trying from cache first
-        if ($this->isRequestCacheEnabled()) {
+        if ($cacheEnabled) {
             $fromCache = $this->requestCache->get($this->getCommandKey(), $this->getCacheKey());
             if ($fromCache !== null) {
                 $this->executionEvents[] = self::EVENT_RESPONSE_FROM_CACHE;
@@ -250,9 +257,10 @@ abstract class AbstractCommand
         }
 
         // putting the result into cache
-        if ($this->isRequestCacheEnabled()) {
+        if ($cacheEnabled) {
             $this->requestCache->put($this->getCommandKey(), $this->getCacheKey(), $result);
         }
+
         return $result;
     }
 
@@ -428,7 +436,7 @@ abstract class AbstractCommand
      */
     private function recordExecutedCommand()
     {
-        if ($this->config->get('requestLog')->get('enabled')) {
+        if ($this->requestLog && $this->config->get('requestLog')->get('enabled')) {
             $this->requestLog->addExecutedCommand($this);
         }
     }
