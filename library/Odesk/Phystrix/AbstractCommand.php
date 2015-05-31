@@ -220,14 +220,14 @@ abstract class AbstractCommand
             $fromCache = $this->requestCache->get($this->getCommandKey(), $this->getCacheKey());
             if ($fromCache !== null) {
                 $metrics->markResponseFromCache();
-                $this->triggerEvent(self::EVENT_RESPONSE_FROM_CACHE);
+                $this->recordExecutionEvent(self::EVENT_RESPONSE_FROM_CACHE);
                 return $fromCache;
             }
         }
         $circuitBreaker = $this->getCircuitBreaker();
         if (!$circuitBreaker->allowRequest()) {
             $metrics->markShortCircuited();
-            $this->triggerEvent(self::EVENT_SHORT_CIRCUITED);
+            $this->recordExecutionEvent(self::EVENT_SHORT_CIRCUITED);
             return $this->getFallbackOrThrowException();
         }
         $this->invocationStartTime = $this->getTimeInMilliseconds();
@@ -236,7 +236,7 @@ abstract class AbstractCommand
             $this->recordExecutionTime();
             $metrics->markSuccess();
             $circuitBreaker->markSuccess();
-            $this->triggerEvent(self::EVENT_SUCCESS);
+            $this->recordExecutionEvent(self::EVENT_SUCCESS);
         } catch (BadRequestException $exception) {
             // Treated differently and allowed to propagate without any stats tracking or fallback logic
             $this->recordExecutionTime();
@@ -244,7 +244,8 @@ abstract class AbstractCommand
         } catch (Exception $exception) {
             $this->recordExecutionTime();
             $metrics->markFailure();
-            $this->triggerEvent(self::EVENT_FAILURE, $exception);
+            $this->executionException = $exception;
+            $this->recordExecutionEvent(self::EVENT_FAILURE);
             $result = $this->getFallbackOrThrowException($exception);
         }
 
@@ -271,8 +272,10 @@ abstract class AbstractCommand
 
     /**
      * Custom logic proceeding event generation
+     *
+     * @param string $eventName
      */
-    protected function handleEvent($eventName, \Exception $e = null )
+    protected function processExecutionEvent($eventName)
     {
     }
 
@@ -291,19 +294,13 @@ abstract class AbstractCommand
     /**
      * Logic to record events and exceptions as they take place
      *
-     * @param string    $eventName  type from class constants EVENT_*
-     * @param Exception $e          exception that was thrown as part of $eventName
+     * @param string $eventName  type from class constants EVENT_*
      */
-    private function triggerEvent($eventName, \Exception $e = null )
+    private function recordExecutionEvent($eventName)
     {
         $this->executionEvents[] = $eventName;
 
-        if ($e) {
-            // TODO: since multiple events may take place, key this by event name
-            $this->executionException = $e;
-        }
-
-        $this->handleEvent( $eventName, $e );
+        $this->processExecutionEvent( $eventName );
     }
 
     /**
@@ -342,7 +339,7 @@ abstract class AbstractCommand
                 try {
                     $executionResult = $this->getFallback();
                     $metrics->markFallbackSuccess();
-                    $this->triggerEvent(self::EVENT_FALLBACK_SUCCESS);
+                    $this->recordExecutionEvent(self::EVENT_FALLBACK_SUCCESS);
                     return $executionResult;
                 } catch (FallbackNotAvailableException $fallbackException) {
                     throw new RuntimeException(
@@ -352,7 +349,7 @@ abstract class AbstractCommand
                     );
                 } catch (Exception $fallbackException) {
                     $metrics->markFallbackFailure();
-                    $this->triggerEvent(self::EVENT_FALLBACK_FAILURE);
+                    $this->recordExecutionEvent(self::EVENT_FALLBACK_FAILURE);
                     throw new RuntimeException(
                         $message . ' and failed retrieving fallback',
                         get_class($this),
@@ -370,7 +367,7 @@ abstract class AbstractCommand
         } catch (Exception $exception) {
             // count that we are throwing an exception and re-throw it
             $metrics->markExceptionThrown();
-            $this->triggerEvent(self::EVENT_EXCEPTION_THROWN);
+            $this->recordExecutionEvent(self::EVENT_EXCEPTION_THROWN);
             throw $exception;
         }
     }
