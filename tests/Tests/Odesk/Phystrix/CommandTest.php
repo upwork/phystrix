@@ -245,10 +245,10 @@ class CommandTest extends \PHPUnit_Framework_TestCase
      */
     public function configBoolProvider() {
 
-        return [
+        return array(
             'config enabled'  => array( true ),
             'config disabled' => array( false ),
-        ];
+        );
     }
 
     public function testExecuteRequestNotAllowed()
