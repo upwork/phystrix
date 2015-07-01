@@ -227,7 +227,7 @@ abstract class AbstractCommand
             $fromCache = $this->requestCache->get($this->getCommandKey(), $this->getCacheKey());
             if ($fromCache !== null) {
                 $metrics->markResponseFromCache();
-                $this->recordExecutionEvent(self::EVENT_RESPONSE_FROM_CACHE);
+                $this->recordExecutionEvent(self::EVENT_RESPONSE_FROM_CACHE, $fromCache);
                 return $fromCache;
             }
         }
@@ -243,7 +243,7 @@ abstract class AbstractCommand
             $this->recordExecutionTime();
             $metrics->markSuccess();
             $circuitBreaker->markSuccess();
-            $this->recordExecutionEvent(self::EVENT_SUCCESS);
+            $this->recordExecutionEvent(self::EVENT_SUCCESS, $result);
         } catch (BadRequestException $exception) {
             // Treated differently and allowed to propagate without any stats tracking or fallback logic
             $this->recordExecutionTime();
@@ -282,8 +282,9 @@ abstract class AbstractCommand
      * Custom logic proceeding event generation
      *
      * @param string $eventName
+     * @param mixed $result result of command if appropriate
      */
-    protected function processExecutionEvent($eventName)
+    protected function processExecutionEvent($eventName, $result = null)
     {
     }
 
@@ -303,12 +304,13 @@ abstract class AbstractCommand
      * Logic to record events and exceptions as they take place
      *
      * @param string $eventName  type from class constants EVENT_*
+     * @param mixed $result result of command if appropriate
      */
-    private function recordExecutionEvent($eventName)
+    private function recordExecutionEvent($eventName, $result = null)
     {
         $this->executionEvents[] = $eventName;
 
-        $this->processExecutionEvent( $eventName );
+        $this->processExecutionEvent($eventName, $result);
     }
 
     /**
@@ -347,7 +349,7 @@ abstract class AbstractCommand
                 try {
                     $executionResult = $this->getFallback();
                     $metrics->markFallbackSuccess();
-                    $this->recordExecutionEvent(self::EVENT_FALLBACK_SUCCESS);
+                    $this->recordExecutionEvent(self::EVENT_FALLBACK_SUCCESS, $executionResult);
                     return $executionResult;
                 } catch (FallbackNotAvailableException $fallbackException) {
                     throw new RuntimeException(
