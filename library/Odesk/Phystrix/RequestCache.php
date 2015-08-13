@@ -31,6 +31,18 @@ class RequestCache
     protected $cachedResults = array();
 
     /**
+     * Clears the cache for a given commandKey only
+     *
+     * @param string $commandKey
+     */
+    public function clearAll($commandKey)
+    {
+        if (isset($this->cachedResults[$commandKey])) {
+            unset($this->cachedResults[$commandKey]);
+        }
+    }
+
+    /**
      * Clears the cache for a given cacheKey, for a given commandKey
      *
      * @param string $commandKey
