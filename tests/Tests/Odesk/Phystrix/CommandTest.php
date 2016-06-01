@@ -411,6 +411,10 @@ class CommandTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($this->commandMetrics));
         $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
         $requestCache->expects($this->once())
+            ->method('exists')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
+            ->will($this->returnValue(true));
+        $requestCache->expects($this->once())
             ->method('get')
             ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
             ->will($this->returnValue('result from cache'));
@@ -420,6 +424,55 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $this->commandMetrics->expects($this->once())->method('markResponseFromCache');
         $this->assertEquals('result from cache', $this->command->execute());
         $this->assertEquals(array(AbstractCommand::EVENT_RESPONSE_FROM_CACHE), $this->command->getExecutionEvents());
+    }
+
+    /**
+     * Test for case when command can return null and this is properly handled by request cache
+     */
+    public function testNullResponseFromCache()
+    {
+        $this->commandMetricsFactory->expects($this->atLeastOnce())
+            ->method('get')
+            ->with('Tests\Odesk\Phystrix\CommandMock')
+            ->will($this->returnValue($this->commandMetrics));
+        $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
+        $requestCache->expects($this->once())
+            ->method('exists')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
+            ->will($this->returnValue(true));
+        $requestCache->expects($this->once())
+            ->method('get')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
+            ->will($this->returnValue(null));
+        $this->command->cacheKey = 'test-cache-key';
+        $this->command->setRequestCache($requestCache);
+        $this->circuitBreakerFactory->expects($this->never())->method('get');
+        $this->commandMetrics->expects($this->once())->method('markResponseFromCache');
+        $this->assertNull($this->command->execute());
+        $this->assertEquals(array(AbstractCommand::EVENT_RESPONSE_FROM_CACHE), $this->command->getExecutionEvents());
+    }
+
+    /**
+     * Test case for cache miss scenario
+     */
+    public function testRequestCacheMiss()
+    {
+        $this->setUpCommonExpectations();
+        $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
+        $requestCache->expects($this->once())
+            ->method('exists')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
+            ->will($this->returnValue(false));
+        $requestCache->expects($this->never())
+            ->method('get');
+        $requestCache->expects($this->once())
+            ->method('put')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key', 'run result');
+        $this->command->cacheKey = 'test-cache-key';
+        $this->command->setRequestCache($requestCache);
+        $this->commandMetrics->expects($this->never())->method('markResponseFromCache');
+        $this->assertEquals('run result', $this->command->execute());
+        $this->assertEquals(array('SUCCESS'), $this->command->getExecutionEvents());
     }
 
     public function testSavesResultToCache()
