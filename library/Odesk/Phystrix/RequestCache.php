@@ -50,7 +50,7 @@ class RequestCache
      */
     public function clear($commandKey, $cacheKey)
     {
-        if (isset($this->cachedResults[$commandKey][$cacheKey])) {
+        if ($this->exists($commandKey, $cacheKey)) {
             unset($this->cachedResults[$commandKey][$cacheKey]);
         }
     }
@@ -64,7 +64,7 @@ class RequestCache
      */
     public function get($commandKey, $cacheKey)
     {
-        if (isset($this->cachedResults[$commandKey][$cacheKey])) {
+        if ($this->exists($commandKey, $cacheKey)) {
             return $this->cachedResults[$commandKey][$cacheKey];
         }
 
@@ -81,5 +81,18 @@ class RequestCache
     public function put($commandKey, $cacheKey, $result)
     {
         $this->cachedResults[$commandKey][$cacheKey] = $result;
+    }
+
+    /**
+     * Returns true, if specified cache key exists
+     *
+     * @param string $commandKey
+     * @param string $cacheKey
+     * @return bool
+     */
+    public function exists($commandKey, $cacheKey)
+    {
+        return array_key_exists($commandKey, $this->cachedResults)
+            && array_key_exists($cacheKey, $this->cachedResults[$commandKey]);
     }
 }

@@ -57,4 +57,12 @@ class RequestCacheTest extends \PHPUnit_Framework_TestCase
         $this->requestCache->clearAll('TestCommand');
         $this->assertNull($this->requestCache->get('TestCommand', 'cache-key-123'));
     }
+
+    public function testExists()
+    {
+        $result = (object) array('a' => 123);
+        $this->assertFalse($this->requestCache->exists('TestCommand', 'cache-key-123'));
+        $this->requestCache->put('TestCommand', 'cache-key-123', $result);
+        $this->assertTrue($this->requestCache->exists('TestCommand', 'cache-key-123'));
+    }
 }

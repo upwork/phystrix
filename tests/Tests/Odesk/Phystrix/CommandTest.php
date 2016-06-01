@@ -22,6 +22,7 @@ use Odesk\Phystrix\AbstractCommand;
 use Odesk\Phystrix\Exception\RuntimeException;
 use Odesk\Phystrix\RequestCache;
 use Odesk\Phystrix\RequestLog;
+use Zend\Config\Config;
 
 class CommandTest extends \PHPUnit_Framework_TestCase
 {
@@ -71,7 +72,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $this->requestLog = new RequestLog();
         $this->command->setRequestLog($this->requestLog);
         $this->command->setCircuitBreakerFactory($this->circuitBreakerFactory);
-        $this->command->setConfig(new \Zend\Config\Config(array(
+        $this->command->setConfig(new Config(array(
             'fallback' => array(
                 'enabled' => true,
             ),
@@ -118,11 +119,11 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testSetTestMergesConfig()
     {
         $command = new CommandMock();
-        $command->setConfig(new \Zend\Config\Config(array('a' => 1), true));
-        $command->setConfig(new \Zend\Config\Config(array('b' => 2), true));
-        $this->assertAttributeEquals(new \Zend\Config\Config(array('a' => 1, 'b' => 2), true), 'config', $command);
-        $command->setConfig(new \Zend\Config\Config(array('c' => 3), true), false); // false to skip merge
-        $this->assertAttributeEquals(new \Zend\Config\Config(array('c' => 3), true), 'config', $command);
+        $command->setConfig(new Config(array('a' => 1), true));
+        $command->setConfig(new Config(array('b' => 2), true));
+        $this->assertAttributeEquals(new Config(array('a' => 1, 'b' => 2), true), 'config', $command);
+        $command->setConfig(new Config(array('c' => 3), true), false); // false to skip merge
+        $this->assertAttributeEquals(new Config(array('c' => 3), true), 'config', $command);
     }
 
     public function testExecuteDefaultCommandKey()
@@ -177,7 +178,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testRequestLogOff()
     {
         $this->setUpCommonExpectations();
-        $this->command->setConfig(new \Zend\Config\Config(array(
+        $this->command->setConfig(new Config(array(
             'requestLog' => array(
                 'enabled' => false,
             ),
@@ -194,15 +195,15 @@ class CommandTest extends \PHPUnit_Framework_TestCase
      *
      * @param bool $logEnabled  whether config is set to use request log
      */
-    public function testRequestLogNotInjected($logEnabled) {
-
+    public function testRequestLogNotInjected($logEnabled)
+    {
         // Duplicate some of the class setup in order to bypass requestLog generation
         $command = new CommandMock();
         $command->setCommandMetricsFactory($this->commandMetricsFactory);
         $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
         $command->setRequestCache(new RequestCache());
 
-        $command->setConfig(new \Zend\Config\Config(array(
+        $command->setConfig(new Config(array(
             'requestLog' => array(
                 'enabled' => $logEnabled,
             ),
@@ -220,15 +221,15 @@ class CommandTest extends \PHPUnit_Framework_TestCase
      *
      * @param bool $cacheEnabled  whether config is set to use request log
      */
-    public function testRequestCacheNotInjected($cacheEnabled) {
-
+    public function testRequestCacheNotInjected($cacheEnabled)
+    {
         // Duplicate some of the class setup in order to bypass requestLog generation
         $command = new CommandMock();
         $command->setCommandMetricsFactory($this->commandMetricsFactory);
         $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
         $command->setRequestLog($this->requestLog);
 
-        $command->setConfig(new \Zend\Config\Config(array(
+        $command->setConfig(new Config(array(
             'requestCache' => array(
                 'enabled' => $cacheEnabled,
             ),
@@ -243,11 +244,11 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     /**
      * @return array
      */
-    public function configBoolProvider() {
-
+    public function configBoolProvider()
+    {
         return array(
-            'config enabled'  => array( true ),
-            'config disabled' => array( false ),
+            'config enabled'  => array(true),
+            'config disabled' => array(false),
         );
     }
 
@@ -310,7 +311,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
             $this->command->execute();
             $this->fail('Exception expected');
         } catch (\Exception $exception) {}
-        $this->assertInstanceof('Odesk\Phystrix\Exception\RuntimeException', $exception);
+        $this->assertInstanceOf('Odesk\Phystrix\Exception\RuntimeException', $exception);
         $this->assertEquals('could not run and failed retrieving fallback', $exception->getMessage());
         $this->assertEquals(
             array(
@@ -378,7 +379,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testExecuteFallbackDisabled()
     {
         $this->setUpCommonExpectations();
-        $this->command->setConfig(new \Zend\Config\Config(array('fallback' => array('enabled' => false))));
+        $this->command->setConfig(new Config(array('fallback' => array('enabled' => false))));
         $this->commandMetrics->expects($this->never()) // because fallback is disabled
             ->method('markFallbackSuccess');
         $this->commandMetrics->expects($this->never()) // because fallback is disabled
@@ -392,7 +393,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
             $this->command->execute();
             $this->fail('Exception expected');
         } catch (\Exception $exception) {}
-        $this->assertInstanceof('Odesk\Phystrix\Exception\RuntimeException', $exception);
+        $this->assertInstanceOf('Odesk\Phystrix\Exception\RuntimeException', $exception);
         $this->assertEquals('could not run and fallback disabled', $exception->getMessage());
         $this->assertEquals(
             array(
@@ -403,13 +404,18 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testResponseFromCache()
+    public function testRequestCacheHit()
     {
         $this->commandMetricsFactory->expects($this->atLeastOnce())
             ->method('get')
             ->with('Tests\Odesk\Phystrix\CommandMock')
             ->will($this->returnValue($this->commandMetrics));
+        /** @var RequestCache|\PHPUnit_Framework_MockObject_MockObject $requestCache */
         $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
+        $requestCache->expects($this->once())
+            ->method('exists')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
+            ->will($this->returnValue(true));
         $requestCache->expects($this->once())
             ->method('get')
             ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
@@ -422,9 +428,34 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array(AbstractCommand::EVENT_RESPONSE_FROM_CACHE), $this->command->getExecutionEvents());
     }
 
+    /**
+     * Test case for cache miss scenario
+     */
+    public function testRequestCacheMiss()
+    {
+        $this->setUpCommonExpectations();
+        /** @var RequestCache|\PHPUnit_Framework_MockObject_MockObject $requestCache */
+        $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
+        $requestCache->expects($this->once())
+            ->method('exists')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key')
+            ->will($this->returnValue(false));
+        $requestCache->expects($this->never())
+            ->method('get');
+        $requestCache->expects($this->once())
+            ->method('put')
+            ->with('Tests\Odesk\Phystrix\CommandMock', 'test-cache-key', 'run result');
+        $this->command->cacheKey = 'test-cache-key';
+        $this->command->setRequestCache($requestCache);
+        $this->commandMetrics->expects($this->never())->method('markResponseFromCache');
+        $this->assertEquals('run result', $this->command->execute());
+        $this->assertEquals(array('SUCCESS'), $this->command->getExecutionEvents());
+    }
+
     public function testSavesResultToCache()
     {
         $this->setUpCommonExpectations();
+        /** @var RequestCache|\PHPUnit_Framework_MockObject_MockObject $requestCache */
         $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
         $requestCache->expects($this->once())
             ->method('put')
@@ -437,7 +468,8 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testRequestCacheDisabled()
     {
         $this->setUpCommonExpectations();
-        $this->command->setConfig(new \Zend\Config\Config(array('requestCache' => array('enabled' => false))));
+        $this->command->setConfig(new Config(array('requestCache' => array('enabled' => false))));
+        /** @var RequestCache|\PHPUnit_Framework_MockObject_MockObject $requestCache */
         $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
         $requestCache->expects($this->never())
             ->method('get');
@@ -452,6 +484,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testRequestCacheGetCacheKeyNotImplemented()
     {
         $this->setUpCommonExpectations();
+        /** @var RequestCache|\PHPUnit_Framework_MockObject_MockObject $requestCache */
         $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
         $requestCache->expects($this->never())
             ->method('get');
