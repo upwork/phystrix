@@ -224,11 +224,11 @@ abstract class AbstractCommand
 
         // trying from cache first
         if ($cacheEnabled) {
-            $fromCache = $this->requestCache->get($this->getCommandKey(), $this->getCacheKey());
-            if ($fromCache !== null) {
+            $cacheHit = $this->requestCache->exists($this->getCommandKey(), $this->getCacheKey());
+            if ($cacheHit) {
                 $metrics->markResponseFromCache();
                 $this->recordExecutionEvent(self::EVENT_RESPONSE_FROM_CACHE);
-                return $fromCache;
+                return $this->requestCache->get($this->getCommandKey(), $this->getCacheKey());
             }
         }
         $circuitBreaker = $this->getCircuitBreaker();
@@ -308,7 +308,7 @@ abstract class AbstractCommand
     {
         $this->executionEvents[] = $eventName;
 
-        $this->processExecutionEvent( $eventName );
+        $this->processExecutionEvent($eventName);
     }
 
     /**
@@ -334,9 +334,10 @@ abstract class AbstractCommand
     /**
      * Attempts to retrieve fallback by calling getFallback
      *
-     * @param Exception $exception (Optional) If null, the request was short-circuited
+     * @param Exception $originalException (Optional) If null, the request was short-circuited
      * @return mixed
      * @throws RuntimeException When fallback is disabled, not available for the command, or failed retrieving
+     * @throws Exception
      */
     private function getFallbackOrThrowException(Exception $originalException = null)
     {
