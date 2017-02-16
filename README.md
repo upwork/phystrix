@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/odesk/phystrix.svg)](https://travis-ci.org/odesk/phystrix)
+[![Build Status](https://travis-ci.org/upwork/phystrix.svg)](https://travis-ci.org/upwork/phystrix)
 
 ### About Phystrix
 
@@ -315,7 +315,7 @@ TBD
 
 ### Licence
 
-Copyright 2013-2014 oDesk Corporation. All Rights Reserved.
+Copyright 2013-2017 Upwork Global Inc. All Rights Reserved.
 
 Phystrix is licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
