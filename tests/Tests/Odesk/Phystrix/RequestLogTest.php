@@ -18,6 +18,7 @@
  */
 namespace Tests\Odesk\Phystrix;
 
+use Odesk\Phystrix\AbstractCommand;
 use Odesk\Phystrix\RequestLog;
 
 class RequestLogTest extends \PHPUnit_Framework_TestCase
@@ -40,5 +41,40 @@ class RequestLogTest extends \PHPUnit_Framework_TestCase
         $this->requestLog->addExecutedCommand($commandA);
         $this->requestLog->addExecutedCommand($commandB);
         $this->assertEquals(array($commandA, $commandB), $this->requestLog->getExecutedCommands());
+    }
+
+    public function testReadableEmptyLog()
+    {
+        $this->assertSame('', $this->requestLog->getExecutedCommandsAsString());
+    }
+
+    public function testReadableLogWithExecutedCommands()
+    {
+        $this->addExecutedCommand('commandA', 100, array(AbstractCommand::EVENT_FAILURE));
+        $this->addExecutedCommand('commandA', 50, array(AbstractCommand::EVENT_SUCCESS));
+        $this->addExecutedCommand('commandA', 15, array(AbstractCommand::EVENT_SUCCESS));
+        $this->addExecutedCommand('commandB', -1, array());
+        $this->assertSame(
+            'commandA[FAILURE][100ms], commandA[SUCCESS][65ms]x2, commandB[Executed][0ms]',
+            $this->requestLog->getExecutedCommandsAsString()
+        );
+    }
+
+    protected function addExecutedCommand($commandKey, $executionTime, array $events)
+    {
+        $command = $this->getMock(
+            'Odesk\Phystrix\AbstractCommand',
+            array('run', 'getCommandKey', 'getExecutionEvents', 'getExecutionTimeInMilliseconds')
+        );
+        $command->expects($this->once())
+            ->method('getCommandKey')
+            ->willReturn($commandKey);
+        $command->expects($this->once())
+            ->method('getExecutionTimeInMilliseconds')
+            ->willReturn($executionTime);
+        $command->expects($this->once())
+            ->method('getExecutionEvents')
+            ->willReturn($events);
+        $this->requestLog->addExecutedCommand($command);
     }
 }
