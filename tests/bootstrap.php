@@ -19,8 +19,7 @@
 namespace {
 
     // Composer autoloader is used for testing
-    $loader = require __DIR__ . '/../vendor/autoload.php';
-    $loader->add('Tests\Odesk', __DIR__);
+    require __DIR__ . '/../vendor/autoload.php';
 }
 
 /**
