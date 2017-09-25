@@ -70,14 +70,14 @@ The factory is instantiated as follows:
 
 ```php
 use Zend\Config\Config;
-use Odesk\Phystrix\ApcStateStorage;
+use Odesk\Phystrix\PsrCacheStateStorage;
 use Odesk\Phystrix\CircuitBreakerFactory;
 use Odesk\Phystrix\CommandMetricsFactory;
 use Odesk\Phystrix\CommandFactory;
 
 $config = new Config(require 'phystrix-config.php');
 
-$stateStorage = new ApcStateStorage();
+$stateStorage = new PsrCacheStateStorage($cacheItemPool);
 $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
 $commandMetricsFactory = new CommandMetricsFactory($stateStorage);
 
