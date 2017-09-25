@@ -15,7 +15,7 @@
          stopOnSkipped="false">
   <testsuites>
     <testsuite name="Tests">
-      <directory suffix=".php">./tests/Tests</directory>
+      <directory suffix=".php">./tests</directory>
     </testsuite>
   </testsuites>
 
