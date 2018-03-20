@@ -16,19 +16,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Iterator;
 
 /**
  * Factory to keep track of and instantiate new command metrics objects when needed
  */
 class CommandMetricsFactory
 {
+    const CONFIGURATION_NAMESPACE = 'metrics';
+
     /**
      * @var array
      */
     protected $commandMetricsByCommand = array();
+
+    /**
+     * @var array
+     */
+    protected $configuration;
 
     /**
      * @var StateStorageInterface
@@ -49,21 +57,57 @@ class CommandMetricsFactory
      * Get command metrics instance by command key for given command config
      *
      * @param string $commandKey
-     * @param Config $commandConfig
+     * @param Iterator $iterableConfiguration
      * @return CommandMetrics
      */
-    public function get($commandKey, Config $commandConfig)
+    public function get($commandKey, Iterator $iterableConfiguration)
     {
         if (!isset($this->commandMetricsByCommand[$commandKey])) {
-            $metricsConfig = $commandConfig->get('metrics');
-            $statisticalWindow = $metricsConfig->get('rollingStatisticalWindowInMilliseconds');
-            $windowBuckets = $metricsConfig->get('rollingStatisticalWindowBuckets');
-            $snapshotInterval = $metricsConfig->get('healthSnapshotIntervalInMilliseconds');
+            $configuration = iterator_to_array($iterableConfiguration);
+            $statisticalWindow = $this->getConfigurationValue(
+                $configuration,
+                'metrics.rollingStatisticalWindowInMilliseconds'
+            );
+            $windowBuckets = $this->getConfigurationValue(
+                $configuration,
+                'metrics.rollingStatisticalWindowBuckets'
+            );
+            $snapshotInterval = $this->getConfigurationValue(
+                $configuration,
+                'metrics.healthSnapshotIntervalInMilliseconds'
+            );
 
             $counter = new MetricsCounter($commandKey, $this->stateStorage, $statisticalWindow, $windowBuckets);
             $this->commandMetricsByCommand[$commandKey] = new CommandMetrics($counter, $snapshotInterval);
         }
 
         return $this->commandMetricsByCommand[$commandKey];
+    }
+
+    /**
+     * @param array|null $configuration
+     * @param string $key
+     * @return mixed|null
+     */
+    private function getConfigurationValue(array $configuration = null, $key)
+    {
+        if (null === $configuration) {
+            return null;
+        }
+
+        if (null === $this->configuration) {
+            if (array_key_exists(static::CONFIGURATION_NAMESPACE, $configuration)) {
+                foreach ($configuration[static::CONFIGURATION_NAMESPACE] as $configurationKey => $configurationValue) {
+                    $this->configuration[static::CONFIGURATION_NAMESPACE . '.' . $configurationKey]
+                        = $configurationValue;
+                }
+            }
+        }
+
+        if (array_key_exists($key, $this->configuration)) {
+            return $this->configuration[$key];
+        }
+
+        return null;
     }
 }

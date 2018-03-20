@@ -18,6 +18,7 @@
  */
 namespace Tests\Odesk\Phystrix;
 
+use ArrayObject;
 use Odesk\Phystrix\ArrayStateStorage;
 use Odesk\Phystrix\CommandMetricsFactory;
 
@@ -25,7 +26,7 @@ class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
 {
     public function testGet()
     {
-        $config = new \Zend\Config\Config(array(
+        $config = new ArrayObject(array(
             'metrics' => array(
                 'rollingStatisticalWindowInMilliseconds' => 10000,
                 'rollingStatisticalWindowBuckets' => 10,
@@ -33,7 +34,8 @@ class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
             )
         ));
         $factory = new CommandMetricsFactory(new ArrayStateStorage());
-        $metrics = $factory->get('TestCommand', $config);
+
+        $metrics = $factory->get('TestCommand', $config->getIterator());
         $this->assertAttributeEquals(2000, 'healthSnapshotIntervalInMilliseconds', $metrics);
 
         $reflection = new \ReflectionClass('Odesk\Phystrix\CommandMetrics');
