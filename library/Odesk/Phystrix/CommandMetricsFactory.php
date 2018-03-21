@@ -19,7 +19,7 @@
 
 namespace Odesk\Phystrix;
 
-use Iterator;
+use Odesk\Phystrix\Configuration\MetricsConfigurationInterface;
 
 /**
  * Factory to keep track of and instantiate new command metrics objects when needed
@@ -57,25 +57,15 @@ class CommandMetricsFactory
      * Get command metrics instance by command key for given command config
      *
      * @param string $commandKey
-     * @param Iterator $iterableConfiguration
+     * @param MetricsConfigurationInterface $metricsConfiguration
      * @return CommandMetrics
      */
-    public function get($commandKey, Iterator $iterableConfiguration)
+    public function get($commandKey, MetricsConfigurationInterface $metricsConfiguration)
     {
         if (!isset($this->commandMetricsByCommand[$commandKey])) {
-            $configuration = iterator_to_array($iterableConfiguration);
-            $statisticalWindow = $this->getConfigurationValue(
-                $configuration,
-                'metrics.rollingStatisticalWindowInMilliseconds'
-            );
-            $windowBuckets = $this->getConfigurationValue(
-                $configuration,
-                'metrics.rollingStatisticalWindowBuckets'
-            );
-            $snapshotInterval = $this->getConfigurationValue(
-                $configuration,
-                'metrics.healthSnapshotIntervalInMilliseconds'
-            );
+            $statisticalWindow = $metricsConfiguration->getRollingStatisticalWindowInMilliseconds();
+            $windowBuckets = $metricsConfiguration->getRollingStatisticalWindowBuckets();
+            $snapshotInterval = $metricsConfiguration->getHealthSnapshotIntervalInMilliseconds();
 
             $counter = new MetricsCounter($commandKey, $this->stateStorage, $statisticalWindow, $windowBuckets);
             $this->commandMetricsByCommand[$commandKey] = new CommandMetrics($counter, $snapshotInterval);

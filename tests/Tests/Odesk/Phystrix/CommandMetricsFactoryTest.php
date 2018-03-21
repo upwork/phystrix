@@ -18,7 +18,6 @@
  */
 namespace Tests\Odesk\Phystrix;
 
-use ArrayObject;
 use Odesk\Phystrix\ArrayStateStorage;
 use Odesk\Phystrix\CommandMetricsFactory;
 
@@ -26,16 +25,21 @@ class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
 {
     public function testGet()
     {
-        $config = new ArrayObject(array(
-            'metrics' => array(
-                'rollingStatisticalWindowInMilliseconds' => 10000,
-                'rollingStatisticalWindowBuckets' => 10,
-                'healthSnapshotIntervalInMilliseconds' => 2000,
-            )
-        ));
+        $config =
+            $this->getMockBuilder('Odesk\Phystrix\Configuration\MetricsConfigurationInterface')
+                ->setMethods(array(
+                    'getHealthSnapshotIntervalInMilliseconds',
+                    'getRollingStatisticalWindowBuckets',
+                    'getRollingStatisticalWindowInMilliseconds'
+                ))
+                ->getMock();
+
+        $config->method('getHealthSnapshotIntervalInMilliseconds')->willReturn(2000);
+        $config->method('getRollingStatisticalWindowInMilliseconds')->willReturn(10000);
+        $config->method('getRollingStatisticalWindowBuckets')->willReturn(10);
         $factory = new CommandMetricsFactory(new ArrayStateStorage());
 
-        $metrics = $factory->get('TestCommand', $config->getIterator());
+        $metrics = $factory->get('TestCommand', $config);
         $this->assertAttributeEquals(2000, 'healthSnapshotIntervalInMilliseconds', $metrics);
 
         $reflection = new \ReflectionClass('Odesk\Phystrix\CommandMetrics');

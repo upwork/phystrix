@@ -18,7 +18,7 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Odesk\Phystrix\Configuration\CircuitBreakerConfigurationInterface;
 
 /**
  * Circuit-breaker logic that is hooked into AbstractCommand execution and will stop allowing executions
@@ -35,11 +35,11 @@ class CircuitBreaker implements CircuitBreakerInterface
     private $metrics;
 
     /**
-     * Phystrix config
+     * Circuit-Breaker config
      *
-     * @var Config
+     * @var CircuitBreakerConfigurationInterface
      */
-    private $config;
+    private $circuitBreakerConfig;
 
     /**
      * @var StateStorageInterface
@@ -58,18 +58,18 @@ class CircuitBreaker implements CircuitBreakerInterface
      *
      * @param string $commandKey
      * @param CommandMetrics $metrics
-     * @param Config $commandConfig
+     * @param CircuitBreakerConfigurationInterface $circuitBreakerConfig
      * @param StateStorageInterface $stateStorage
      */
     public function __construct(
         $commandKey,
         CommandMetrics $metrics,
-        Config $commandConfig,
+        CircuitBreakerConfigurationInterface $circuitBreakerConfig,
         StateStorageInterface $stateStorage
     ) {
         $this->commandKey = $commandKey;
         $this->metrics = $metrics;
-        $this->config = $commandConfig;
+        $this->circuitBreakerConfig = $circuitBreakerConfig;
         $this->stateStorage = $stateStorage;
     }
 
@@ -87,19 +87,19 @@ class CircuitBreaker implements CircuitBreakerInterface
         }
 
         $healthCounts = $this->metrics->getHealthCounts();
-        if ($healthCounts->getTotal() < $this->config->get('circuitBreaker')->get('requestVolumeThreshold')) {
+        if ($healthCounts->getTotal() < $this->circuitBreakerConfig->getRequestVolumeThreshold()) {
             // we are not past the minimum volume threshold for the statistical window
             // so we'll return false immediately and not calculate anything
             return false;
         }
 
-        $allowedErrorPercentage = $this->config->get('circuitBreaker')->get('errorThresholdPercentage');
+        $allowedErrorPercentage = $this->circuitBreakerConfig->getErrorThresholdPercentage();
         if ($healthCounts->getErrorPercentage() < $allowedErrorPercentage) {
             return false;
         } else {
             $this->stateStorage->openCircuit(
                 $this->commandKey,
-                $this->config->get('circuitBreaker')->get('sleepWindowInMilliseconds')
+                $this->circuitBreakerConfig->getSleepWindowInMilliseconds()
             );
             return true;
         }
@@ -114,7 +114,7 @@ class CircuitBreaker implements CircuitBreakerInterface
     {
         return $this->stateStorage->allowSingleTest(
             $this->commandKey,
-            $this->config->get('circuitBreaker')->get('sleepWindowInMilliseconds')
+            $this->circuitBreakerConfig->getSleepWindowInMilliseconds()
         );
     }
 
@@ -125,10 +125,10 @@ class CircuitBreaker implements CircuitBreakerInterface
      */
     public function allowRequest()
     {
-        if ($this->config->get('circuitBreaker')->get('forceOpen')) {
+        if ($this->circuitBreakerConfig->isForceOpened()) {
             return false;
         }
-        if ($this->config->get('circuitBreaker')->get('forceClosed')) {
+        if ($this->circuitBreakerConfig->isForceClosed()) {
             return true;
         }
 
