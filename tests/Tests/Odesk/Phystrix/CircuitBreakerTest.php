@@ -51,6 +51,7 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
                     'getErrorThresholdPercentage',
                     'getRequestVolumeThreshold',
                     'getSleepWindowInMilliseconds',
+                    'isEnabled',
                     'isForceClosed',
                     'isForceOpened',
                 ))->getMock();

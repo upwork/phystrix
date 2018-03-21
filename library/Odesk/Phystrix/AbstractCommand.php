@@ -18,6 +18,8 @@
  */
 namespace Odesk\Phystrix;
 
+use ArrayAccess;
+use Odesk\Phystrix\Configuration\PhystrixCommandConfiguration;
 use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
 use Odesk\Phystrix\Exception\RuntimeException;
@@ -49,7 +51,7 @@ abstract class AbstractCommand
     /**
      * Command configuration
      *
-     * @var Config
+     * @var PhystrixCommandConfiguration
      */
     protected $config;
 
@@ -164,17 +166,15 @@ abstract class AbstractCommand
     /**
      * Sets base command configuration from the global phystrix configuration
      *
-     * @param Config $phystrixConfig
+     * @param ArrayAccess $phystrixConfig
      */
-    public function initializeConfig(Config $phystrixConfig)
+    public function initializeConfig(ArrayAccess $phystrixConfig)
     {
         $commandKey = $this->getCommandKey();
-        $config = new Config($phystrixConfig->get('default')->toArray(), true);
-        if ($phystrixConfig->__isset($commandKey)) {
-            $commandConfig = $phystrixConfig->get($commandKey);
-            $config->merge($commandConfig);
-        }
-        $this->config = $config;
+        $config = $phystrixConfig->offsetGet('default');
+        $config->merge($phystrixConfig->offsetGet($commandKey));
+
+        $this->config = new PhystrixCommandConfiguration($config);
     }
 
     /**

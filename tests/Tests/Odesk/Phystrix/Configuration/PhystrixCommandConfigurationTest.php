@@ -36,6 +36,7 @@ class PhystrixCommandConfigurationTest extends PHPUnit_Framework_TestCase
         $configurationArray = new ArrayObject(array(
             'circuitBreaker' => array(
                 CircuitBreakerConfigurationInterface::CONFIG_KEY_ERROR_THRESHOLD_PERCENTAGE => 25,
+                CircuitBreakerConfigurationInterface::CONFIG_KEY_ENABLED => true,
                 CircuitBreakerConfigurationInterface::CONFIG_KEY_FORCE_CLOSED => false,
                 CircuitBreakerConfigurationInterface::CONFIG_KEY_FORCE_OPENED => true,
                 CircuitBreakerConfigurationInterface::CONFIG_KEY_REQUEST_VOLUME_THRESHOLD => 32,
@@ -54,8 +55,9 @@ class PhystrixCommandConfigurationTest extends PHPUnit_Framework_TestCase
     public function testConfigurationAppliesCircuitBreakerConfigurationFromIterator()
     {
         $this->assertSame(25, $this->configuration->getErrorThresholdPercentage());
-        $this->assertSame(false, $this->configuration->isForceClosed());
-        $this->assertSame(true, $this->configuration->isForceOpened());
+        $this->assertTrue($this->configuration->isEnabled());
+        $this->assertFalse($this->configuration->isForceClosed());
+        $this->assertTrue($this->configuration->isForceOpened());
         $this->assertSame(32, $this->configuration->getRequestVolumeThreshold());
         $this->assertSame(5000, $this->configuration->getSleepWindowInMilliseconds());
     }

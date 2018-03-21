@@ -24,6 +24,7 @@ namespace Odesk\Phystrix\Configuration;
 interface CircuitBreakerConfigurationInterface
 {
     const CONFIG_KEY_ERROR_THRESHOLD_PERCENTAGE = 'errorThresholdPercentage';
+    const CONFIG_KEY_ENABLED = 'enabled';
     const CONFIG_KEY_FORCE_CLOSED = 'forceClosed';
     const CONFIG_KEY_FORCE_OPENED = 'forceOpen';
     const CONFIG_KEY_REQUEST_VOLUME_THRESHOLD = 'requestVolumeThreshold';
@@ -43,6 +44,11 @@ interface CircuitBreakerConfigurationInterface
      * @return integer
      */
     public function getSleepWindowInMilliseconds();
+
+    /**
+     * @return boolean
+     */
+    public function isEnabled();
 
     /**
      * @return boolean

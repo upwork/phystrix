@@ -18,7 +18,7 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Odesk\Phystrix\Configuration\PhystrixCommandConfiguration;
 
 /**
  * Factory to keep track of and instantiate new circuit breakers when needed
@@ -49,15 +49,14 @@ class CircuitBreakerFactory
      * Get circuit breaker instance by command key for given command config
      *
      * @param string $commandKey
-     * @param Config $commandConfig
+     * @param PhystrixCommandConfiguration $commandConfig
      * @param CommandMetrics $metrics
      * @return CircuitBreakerInterface
      */
-    public function get($commandKey, Config $commandConfig, CommandMetrics $metrics)
+    public function get($commandKey, PhystrixCommandConfiguration $commandConfig, CommandMetrics $metrics)
     {
         if (!isset($this->circuitBreakersByCommand[$commandKey])) {
-            $circuitBreakerConfig = $commandConfig->get('circuitBreaker');
-            if ($circuitBreakerConfig->get('enabled')) {
+            if ($commandConfig->isEnabled()) {
                 $this->circuitBreakersByCommand[$commandKey] =
                     new CircuitBreaker($commandKey, $metrics, $commandConfig, $this->stateStorage);
             } else {

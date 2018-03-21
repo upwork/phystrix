@@ -19,18 +19,13 @@
 
 namespace Odesk\Phystrix\Configuration;
 
-use Iterator;
+use ArrayAccess;
 
 /**
  * Phystrix command configuration class
  */
 class PhystrixCommandConfiguration implements MetricsConfigurationInterface, CircuitBreakerConfigurationInterface
 {
-    /**
-     * @var array
-     */
-    private $configuration;
-
     /**
      * @var array
      */
@@ -41,15 +36,10 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
      */
     private $metricsConfiguration = array();
 
-    public function __construct(Iterator $configurationIterator)
+    public function __construct(ArrayAccess $configurationIterator)
     {
-        $this->configuration = iterator_to_array($configurationIterator);
-        if (array_key_exists('circuitBreaker', $this->configuration)) {
-            $this->circuitBreakerConfiguration = $this->configuration['circuitBreaker'];
-        }
-        if (array_key_exists('metrics', $this->configuration)) {
-            $this->metricsConfiguration = $this->configuration['metrics'];
-        }
+        $this->circuitBreakerConfiguration = $configurationIterator->offsetGet('circuitBreaker');
+        $this->metricsConfiguration = $configurationIterator->offsetGet('metrics');
     }
 
     /**
@@ -121,6 +111,18 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
             $this->circuitBreakerConfiguration,
             CircuitBreakerConfigurationInterface::CONFIG_KEY_SLEEP_WINDOW_IN_MILLISECONDS,
             0
+        );
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isEnabled()
+    {
+        return $this->getConfigurationValue(
+            $this->circuitBreakerConfiguration,
+            CircuitBreakerConfigurationInterface::CONFIG_KEY_ENABLED,
+            false
         );
     }
 

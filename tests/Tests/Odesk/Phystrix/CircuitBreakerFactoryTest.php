@@ -20,6 +20,8 @@ namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\CircuitBreakerFactory;
 use Odesk\Phystrix\CommandMetrics;
+use Odesk\Phystrix\Configuration\CircuitBreakerConfigurationInterface;
+use PHPUnit_Framework_MockObject_MockObject;
 
 class CircuitBreakerFactoryTest extends \PHPUnit_Framework_TestCase
 {
@@ -47,33 +49,45 @@ class CircuitBreakerFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testGetNoOpCircuitBreaker()
     {
-        $config = self::$baseConfig;
-        $config['circuitBreaker']['enabled'] = false;
-        $config = new \Zend\Config\Config($config);
-        $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
+        $circuitBreaker = $this->factory->get('TestCommand', $this->getConfig(false), $this->metrics);
         $this->assertInstanceOf('Odesk\Phystrix\NoOpCircuitBreaker', $circuitBreaker);
     }
 
     public function testGetInstantiatesOnce()
     {
-        $config = self::$baseConfig;
-        $config['circuitBreaker']['enabled'] = false;
-        $config = new \Zend\Config\Config($config);
         // this will be a NoOpCircuitBreaker
-        $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
+        $circuitBreaker = $this->factory->get('TestCommand', $this->getConfig(false), $this->metrics);
         // now trying to get the same circuit breaker with a different config
         $circuitBreakerB
-            = $this->factory->get('TestCommand', new \Zend\Config\Config(self::$baseConfig), $this->metrics);
+            = $this->factory->get('TestCommand', $this->getConfig(), $this->metrics);
         $this->assertEquals($circuitBreaker, $circuitBreakerB);
     }
 
     public function testGetInjectsParameters()
     {
-        $config = new \Zend\Config\Config(self::$baseConfig);
+        $config = $this->getConfig();
         $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
         $this->assertAttributeEquals('TestCommand', 'commandKey', $circuitBreaker);
         $this->assertAttributeEquals($config, 'config', $circuitBreaker);
         $this->assertAttributeInstanceOf('Odesk\Phystrix\CommandMetrics', 'metrics', $circuitBreaker);
         $this->assertAttributeInstanceOf('Odesk\Phystrix\StateStorageInterface', 'stateStorage', $circuitBreaker);
+    }
+
+    /**
+     * @param bool $isEnabled
+     * @return PHPUnit_Framework_MockObject_MockObject
+     */
+    private function getConfig($isEnabled = true)
+    {
+        $config = $this->getMockBuilder('Odesk\Phystrix\Configuration\PhystrixCommandConfiguration')
+            ->disableOriginalConstructor()
+            ->setMethods(array(
+                'isEnabled'
+            ))
+            ->getMock();
+
+        $config->method('isEnabled')->willReturn($isEnabled);
+
+        return $config;
     }
 }
