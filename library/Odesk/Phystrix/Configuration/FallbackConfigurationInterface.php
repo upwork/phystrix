@@ -19,28 +19,14 @@
 namespace Odesk\Phystrix\Configuration;
 
 /**
- * Metrics configuration interface
+ * Fallback configuration interface
  */
-interface MetricsConfigurationInterface
+interface FallbackConfigurationInterface
 {
-    const MT_CONFIG_KEY_HEALTH_SNAPSHOT_INTERVAL_IN_MILLISECONDS = 'healthSnapshotIntervalInMilliseconds';
-    const MT_CONFIG_KEY_ROLLING_STATISTICAL_WINDOW_BUCKETS = 'rollingStatisticalWindowBuckets';
-    const MT_CONFIG_KEY_ROLLING_STATISTICAL_WINDOW_IN_MILLISECONDS = 'rollingStatisticalWindowInMilliseconds';
-
-
+    const FB_CONFIG_KEY_ENABLED = 'enabled';
 
     /**
-     * @return integer
+     * @return boolean
      */
-    public function getMetricsHealthSnapshotIntervalInMilliseconds();
-
-    /**
-     * @return integer
-     */
-    public function getMetricsRollingStatisticalWindowBuckets();
-
-    /**
-     * @return integer
-     */
-    public function getMetricsRollingStatisticalWindowInMilliseconds();
+    public function isFallbackEnabled();
 }

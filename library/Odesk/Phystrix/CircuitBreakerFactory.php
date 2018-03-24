@@ -56,7 +56,7 @@ class CircuitBreakerFactory
     public function get($commandKey, PhystrixCommandConfiguration $commandConfig, CommandMetrics $metrics)
     {
         if (!isset($this->circuitBreakersByCommand[$commandKey])) {
-            if ($commandConfig->isEnabled()) {
+            if ($commandConfig->isCircuitBreakerEnabled()) {
                 $this->circuitBreakersByCommand[$commandKey] =
                     new CircuitBreaker($commandKey, $metrics, $commandConfig, $this->stateStorage);
             } else {

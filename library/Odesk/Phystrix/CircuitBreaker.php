@@ -87,19 +87,19 @@ class CircuitBreaker implements CircuitBreakerInterface
         }
 
         $healthCounts = $this->metrics->getHealthCounts();
-        if ($healthCounts->getTotal() < $this->circuitBreakerConfig->getRequestVolumeThreshold()) {
+        if ($healthCounts->getTotal() < $this->circuitBreakerConfig->getCircuitBreakerRequestVolumeThreshold()) {
             // we are not past the minimum volume threshold for the statistical window
             // so we'll return false immediately and not calculate anything
             return false;
         }
 
-        $allowedErrorPercentage = $this->circuitBreakerConfig->getErrorThresholdPercentage();
+        $allowedErrorPercentage = $this->circuitBreakerConfig->getCircuitBreakerErrorThresholdPercentage();
         if ($healthCounts->getErrorPercentage() < $allowedErrorPercentage) {
             return false;
         } else {
             $this->stateStorage->openCircuit(
                 $this->commandKey,
-                $this->circuitBreakerConfig->getSleepWindowInMilliseconds()
+                $this->circuitBreakerConfig->getCircuitBreakerSleepWindowInMilliseconds()
             );
             return true;
         }
@@ -114,7 +114,7 @@ class CircuitBreaker implements CircuitBreakerInterface
     {
         return $this->stateStorage->allowSingleTest(
             $this->commandKey,
-            $this->circuitBreakerConfig->getSleepWindowInMilliseconds()
+            $this->circuitBreakerConfig->getCircuitBreakerSleepWindowInMilliseconds()
         );
     }
 
@@ -125,10 +125,10 @@ class CircuitBreaker implements CircuitBreakerInterface
      */
     public function allowRequest()
     {
-        if ($this->circuitBreakerConfig->isForceOpened()) {
+        if ($this->circuitBreakerConfig->isCircuitBreakerForceOpened()) {
             return false;
         }
-        if ($this->circuitBreakerConfig->isForceClosed()) {
+        if ($this->circuitBreakerConfig->isCircuitBreakerForceClosed()) {
             return true;
         }
 

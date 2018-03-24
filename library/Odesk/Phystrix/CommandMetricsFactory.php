@@ -63,9 +63,9 @@ class CommandMetricsFactory
     public function get($commandKey, MetricsConfigurationInterface $metricsConfiguration)
     {
         if (!isset($this->commandMetricsByCommand[$commandKey])) {
-            $statisticalWindow = $metricsConfiguration->getRollingStatisticalWindowInMilliseconds();
-            $windowBuckets = $metricsConfiguration->getRollingStatisticalWindowBuckets();
-            $snapshotInterval = $metricsConfiguration->getHealthSnapshotIntervalInMilliseconds();
+            $statisticalWindow = $metricsConfiguration->getMetricsRollingStatisticalWindowInMilliseconds();
+            $windowBuckets = $metricsConfiguration->getMetricsRollingStatisticalWindowBuckets();
+            $snapshotInterval = $metricsConfiguration->getMetricsHealthSnapshotIntervalInMilliseconds();
 
             $counter = new MetricsCounter($commandKey, $this->stateStorage, $statisticalWindow, $windowBuckets);
             $this->commandMetricsByCommand[$commandKey] = new CommandMetrics($counter, $snapshotInterval);

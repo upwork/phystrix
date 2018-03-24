@@ -24,7 +24,12 @@ use ArrayAccess;
 /**
  * Phystrix command configuration class
  */
-class PhystrixCommandConfiguration implements MetricsConfigurationInterface, CircuitBreakerConfigurationInterface
+class PhystrixCommandConfiguration implements
+    CircuitBreakerConfigurationInterface,
+    FallbackConfigurationInterface,
+    MetricsConfigurationInterface,
+    RequestCacheConfigurationInterface,
+    RequestLogConfigurationInterface
 {
     /**
      * @var array
@@ -34,22 +39,59 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @var array
      */
+    private $fallbackConfiguration = array();
+
+    /**
+     * @var array
+     */
     private $metricsConfiguration = array();
 
-    public function __construct(ArrayAccess $configurationIterator)
+    /**
+     * @var array
+     */
+    private $requestCacheConfiguration = array();
+
+    /**
+     * @var array
+     */
+    private $requestLogConfiguration = array();
+
+    public function __construct(ArrayAccess $configuration)
     {
-        $this->circuitBreakerConfiguration = $configurationIterator->offsetGet('circuitBreaker');
-        $this->metricsConfiguration = $configurationIterator->offsetGet('metrics');
+        $this->circuitBreakerConfiguration =
+            $configuration->offsetExists('circuitBreaker')
+                ? $configuration->offsetGet('circuitBreaker')
+                : array();
+
+        $this->fallbackConfiguration =
+            $configuration->offsetExists('fallback')
+                ? $configuration->offsetGet('fallback')
+                : array();
+
+        $this->metricsConfiguration =
+            $configuration->offsetExists('metrics')
+                ? $configuration->offsetGet('metrics')
+                : array();
+
+        $this->requestCacheConfiguration =
+            $configuration->offsetExists('requestCache')
+                ? $configuration->offsetGet('requestCache')
+                : array();
+
+        $this->requestLogConfiguration =
+            $configuration->offsetExists('requestLog')
+                ? $configuration->offsetGet('requestLog')
+                : array();
     }
 
     /**
      * @return integer
      */
-    public function getHealthSnapshotIntervalInMilliseconds()
+    public function getMetricsHealthSnapshotIntervalInMilliseconds()
     {
         return $this->getConfigurationValue(
             $this->metricsConfiguration,
-            MetricsConfigurationInterface::CONFIG_KEY_HEALTH_SNAPSHOT_INTERVAL_IN_MILLISECONDS,
+            MetricsConfigurationInterface::MT_CONFIG_KEY_HEALTH_SNAPSHOT_INTERVAL_IN_MILLISECONDS,
             0
         );
     }
@@ -57,11 +99,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return integer
      */
-    public function getRollingStatisticalWindowBuckets()
+    public function getMetricsRollingStatisticalWindowBuckets()
     {
         return $this->getConfigurationValue(
             $this->metricsConfiguration,
-            MetricsConfigurationInterface::CONFIG_KEY_ROLLING_STATISTICAL_WINDOW_BUCKETS,
+            MetricsConfigurationInterface::MT_CONFIG_KEY_ROLLING_STATISTICAL_WINDOW_BUCKETS,
             0
         );
     }
@@ -69,11 +111,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return integer
      */
-    public function getRollingStatisticalWindowInMilliseconds()
+    public function getMetricsRollingStatisticalWindowInMilliseconds()
     {
         return $this->getConfigurationValue(
             $this->metricsConfiguration,
-            MetricsConfigurationInterface::CONFIG_KEY_ROLLING_STATISTICAL_WINDOW_IN_MILLISECONDS,
+            MetricsConfigurationInterface::MT_CONFIG_KEY_ROLLING_STATISTICAL_WINDOW_IN_MILLISECONDS,
             0
         );
     }
@@ -81,11 +123,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return integer
      */
-    public function getErrorThresholdPercentage()
+    public function getCircuitBreakerErrorThresholdPercentage()
     {
         return $this->getConfigurationValue(
             $this->circuitBreakerConfiguration,
-            CircuitBreakerConfigurationInterface::CONFIG_KEY_ERROR_THRESHOLD_PERCENTAGE,
+            CircuitBreakerConfigurationInterface::CB_CONFIG_KEY_ERROR_THRESHOLD_PERCENTAGE,
             0
         );
     }
@@ -93,11 +135,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return integer
      */
-    public function getRequestVolumeThreshold()
+    public function getCircuitBreakerRequestVolumeThreshold()
     {
         return $this->getConfigurationValue(
             $this->circuitBreakerConfiguration,
-            CircuitBreakerConfigurationInterface::CONFIG_KEY_REQUEST_VOLUME_THRESHOLD,
+            CircuitBreakerConfigurationInterface::CB_CONFIG_KEY_REQUEST_VOLUME_THRESHOLD,
             0
         );
     }
@@ -105,11 +147,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return integer
      */
-    public function getSleepWindowInMilliseconds()
+    public function getCircuitBreakerSleepWindowInMilliseconds()
     {
         return $this->getConfigurationValue(
             $this->circuitBreakerConfiguration,
-            CircuitBreakerConfigurationInterface::CONFIG_KEY_SLEEP_WINDOW_IN_MILLISECONDS,
+            CircuitBreakerConfigurationInterface::CB_CONFIG_KEY_SLEEP_WINDOW_IN_MILLISECONDS,
             0
         );
     }
@@ -117,11 +159,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return boolean
      */
-    public function isEnabled()
+    public function isCircuitBreakerEnabled()
     {
         return $this->getConfigurationValue(
             $this->circuitBreakerConfiguration,
-            CircuitBreakerConfigurationInterface::CONFIG_KEY_ENABLED,
+            CircuitBreakerConfigurationInterface::CB_CONFIG_KEY_ENABLED,
             false
         );
     }
@@ -129,11 +171,11 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return boolean
      */
-    public function isForceClosed()
+    public function isCircuitBreakerForceClosed()
     {
         return $this->getConfigurationValue(
             $this->circuitBreakerConfiguration,
-            CircuitBreakerConfigurationInterface::CONFIG_KEY_FORCE_CLOSED,
+            CircuitBreakerConfigurationInterface::CB_CONFIG_KEY_FORCE_CLOSED,
             false
         );
     }
@@ -141,14 +183,51 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
     /**
      * @return boolean
      */
-    public function isForceOpened()
+    public function isCircuitBreakerForceOpened()
     {
         return $this->getConfigurationValue(
             $this->circuitBreakerConfiguration,
-            CircuitBreakerConfigurationInterface::CONFIG_KEY_FORCE_OPENED,
+            CircuitBreakerConfigurationInterface::CB_CONFIG_KEY_FORCE_OPENED,
             false
         );
     }
+
+    /**
+     * @return boolean
+     */
+    public function isRequestCacheEnabled()
+    {
+        return $this->getConfigurationValue(
+            $this->requestCacheConfiguration,
+            RequestCacheConfigurationInterface::RC_CONFIG_KEY_ENABLED,
+            false
+        );
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isFallbackEnabled()
+    {
+        return $this->getConfigurationValue(
+            $this->fallbackConfiguration,
+            FallbackConfigurationInterface::FB_CONFIG_KEY_ENABLED,
+            false
+        );
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isRequestLogEnabled()
+    {
+        return $this->getConfigurationValue(
+            $this->requestLogConfiguration,
+            RequestLogConfigurationInterface::RL_CONFIG_KEY_ENABLED,
+            false
+        );
+    }
+
     /**
      * @param array $configuration
      * @param string $key
@@ -157,8 +236,7 @@ class PhystrixCommandConfiguration implements MetricsConfigurationInterface, Cir
      */
     private function getConfigurationValue(array $configuration, $key, $default = null)
     {
-        if (!array_key_exists($key, $configuration))
-        {
+        if (!array_key_exists($key, $configuration)) {
             return $default;
         }
 

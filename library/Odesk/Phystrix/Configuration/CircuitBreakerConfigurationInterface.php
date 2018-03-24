@@ -23,40 +23,40 @@ namespace Odesk\Phystrix\Configuration;
  */
 interface CircuitBreakerConfigurationInterface
 {
-    const CONFIG_KEY_ERROR_THRESHOLD_PERCENTAGE = 'errorThresholdPercentage';
-    const CONFIG_KEY_ENABLED = 'enabled';
-    const CONFIG_KEY_FORCE_CLOSED = 'forceClosed';
-    const CONFIG_KEY_FORCE_OPENED = 'forceOpen';
-    const CONFIG_KEY_REQUEST_VOLUME_THRESHOLD = 'requestVolumeThreshold';
-    const CONFIG_KEY_SLEEP_WINDOW_IN_MILLISECONDS = 'sleepWindowInMilliseconds';
+    const CB_CONFIG_KEY_ERROR_THRESHOLD_PERCENTAGE = 'errorThresholdPercentage';
+    const CB_CONFIG_KEY_ENABLED = 'enabled';
+    const CB_CONFIG_KEY_FORCE_CLOSED = 'forceClosed';
+    const CB_CONFIG_KEY_FORCE_OPENED = 'forceOpen';
+    const CB_CONFIG_KEY_REQUEST_VOLUME_THRESHOLD = 'requestVolumeThreshold';
+    const CB_CONFIG_KEY_SLEEP_WINDOW_IN_MILLISECONDS = 'sleepWindowInMilliseconds';
 
     /**
      * @return integer
      */
-    public function getErrorThresholdPercentage();
+    public function getCircuitBreakerErrorThresholdPercentage();
 
     /**
      * @return integer
      */
-    public function getRequestVolumeThreshold();
+    public function getCircuitBreakerRequestVolumeThreshold();
 
     /**
      * @return integer
      */
-    public function getSleepWindowInMilliseconds();
+    public function getCircuitBreakerSleepWindowInMilliseconds();
 
     /**
      * @return boolean
      */
-    public function isEnabled();
+    public function isCircuitBreakerEnabled();
 
     /**
      * @return boolean
      */
-    public function isForceClosed();
+    public function isCircuitBreakerForceClosed();
 
     /**
      * @return boolean
      */
-    public function isForceOpened();
+    public function isCircuitBreakerForceOpened();
 }

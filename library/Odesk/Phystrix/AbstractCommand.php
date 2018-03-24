@@ -24,7 +24,6 @@ use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
 use Odesk\Phystrix\Exception\RuntimeException;
 use Zend\Di\LocatorInterface;
-use Zend\Config\Config;
 use Exception;
 
 /**
@@ -49,11 +48,16 @@ abstract class AbstractCommand
     protected $commandKey;
 
     /**
+     * @var ArrayAccess
+     */
+    protected $config;
+
+    /**
      * Command configuration
      *
      * @var PhystrixCommandConfiguration
      */
-    protected $config;
+    protected $commandConfig;
 
     /**
      * @var CircuitBreakerFactory
@@ -171,10 +175,10 @@ abstract class AbstractCommand
     public function initializeConfig(ArrayAccess $phystrixConfig)
     {
         $commandKey = $this->getCommandKey();
-        $config = $phystrixConfig->offsetGet('default');
-        $config->merge($phystrixConfig->offsetGet($commandKey));
+        $this->config = $phystrixConfig->offsetGet('default');
+        $this->config->merge($phystrixConfig->offsetGet($commandKey));
 
-        $this->config = new PhystrixCommandConfiguration($config);
+        $this->config = new PhystrixCommandConfiguration($this->config);
     }
 
     /**
@@ -190,6 +194,8 @@ abstract class AbstractCommand
         } else {
             $this->config = $config;
         }
+
+        $this->commandConfig->updateConfiguration($this->config);
     }
 
     /**
@@ -203,7 +209,7 @@ abstract class AbstractCommand
             return false;
         }
 
-        return $this->config->get('requestCache')->get('enabled') && $this->getCacheKey() !== null;
+        return $this->commandConfig->isRequestCacheEnabled() && $this->getCacheKey() !== null;
     }
 
     /**
@@ -318,17 +324,17 @@ abstract class AbstractCommand
      */
     private function getMetrics()
     {
-        return $this->commandMetricsFactory->get($this->getCommandKey(), $this->config);
+        return $this->commandMetricsFactory->get($this->getCommandKey(), $this->commandConfig);
     }
 
     /**
      * Circuit breaker for this command key
      *
-     * @return CircuitBreaker
+     * @return CircuitBreakerInterface
      */
     private function getCircuitBreaker()
     {
-        return $this->circuitBreakerFactory->get($this->getCommandKey(), $this->config, $this->getMetrics());
+        return $this->circuitBreakerFactory->get($this->getCommandKey(), $this->commandConfig, $this->getMetrics());
     }
 
     /**
@@ -344,7 +350,7 @@ abstract class AbstractCommand
         $metrics = $this->getMetrics();
         $message = $originalException === null ? 'Short-circuited' : $originalException->getMessage();
         try {
-            if ($this->config->get('fallback')->get('enabled')) {
+            if ($this->commandConfig->isFallbackEnabled()) {
                 try {
                     $executionResult = $this->getFallback();
                     $metrics->markFallbackSuccess();
@@ -460,7 +466,7 @@ abstract class AbstractCommand
      */
     private function recordExecutedCommand()
     {
-        if ($this->requestLog && $this->config->get('requestLog')->get('enabled')) {
+        if ($this->requestLog && $this->commandConfig->isRequestLogEnabled()) {
             $this->requestLog->addExecutedCommand($this);
         }
     }
