@@ -20,7 +20,7 @@ namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\CircuitBreakerFactory;
 use Odesk\Phystrix\CommandMetrics;
-use Odesk\Phystrix\Configuration\CircuitBreakerConfigurationInterface;
+use Odesk\Phystrix\Configuration\PhystrixCommandConfiguration;
 use PHPUnit_Framework_MockObject_MockObject;
 
 class CircuitBreakerFactoryTest extends \PHPUnit_Framework_TestCase
@@ -34,12 +34,6 @@ class CircuitBreakerFactoryTest extends \PHPUnit_Framework_TestCase
      * @var CommandMetrics
      */
     protected $metrics;
-
-    protected static $baseConfig = array(
-        'circuitBreaker' => array(
-            'enabled' => true,
-        )
-    );
 
     protected function setUp()
     {
@@ -68,25 +62,25 @@ class CircuitBreakerFactoryTest extends \PHPUnit_Framework_TestCase
         $config = $this->getConfig();
         $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
         $this->assertAttributeEquals('TestCommand', 'commandKey', $circuitBreaker);
-        $this->assertAttributeEquals($config, 'config', $circuitBreaker);
+        $this->assertAttributeEquals($config, 'circuitBreakerConfig', $circuitBreaker);
         $this->assertAttributeInstanceOf('Odesk\Phystrix\CommandMetrics', 'metrics', $circuitBreaker);
         $this->assertAttributeInstanceOf('Odesk\Phystrix\StateStorageInterface', 'stateStorage', $circuitBreaker);
     }
 
     /**
      * @param bool $isEnabled
-     * @return PHPUnit_Framework_MockObject_MockObject
+     * @return PHPUnit_Framework_MockObject_MockObject|PhystrixCommandConfiguration
      */
     private function getConfig($isEnabled = true)
     {
         $config = $this->getMockBuilder('Odesk\Phystrix\Configuration\PhystrixCommandConfiguration')
             ->disableOriginalConstructor()
             ->setMethods(array(
-                'isEnabled'
+                'isCircuitBreakerEnabled'
             ))
             ->getMock();
 
-        $config->method('isEnabled')->willReturn($isEnabled);
+        $config->method('isCircuitBreakerEnabled')->willReturn($isEnabled);
 
         return $config;
     }

@@ -64,6 +64,27 @@ class PhystrixCommandConfigurationTest extends PHPUnit_Framework_TestCase
         $this->configuration = new PhystrixCommandConfiguration($configurationArray);
     }
 
+    public function testConfigurationAppliesDefaultValuesIfConfigurationsAreMissing()
+    {
+        $this->configuration = new PhystrixCommandConfiguration(new ArrayObject(array()));
+        $this->assertSame(0, $this->configuration->getCircuitBreakerErrorThresholdPercentage());
+        $this->assertFalse($this->configuration->isCircuitBreakerEnabled());
+        $this->assertFalse($this->configuration->isCircuitBreakerForceClosed());
+        $this->assertFalse($this->configuration->isCircuitBreakerForceOpened());
+        $this->assertSame(0, $this->configuration->getCircuitBreakerRequestVolumeThreshold());
+        $this->assertSame(0, $this->configuration->getCircuitBreakerSleepWindowInMilliseconds());
+
+        $this->assertSame(0, $this->configuration->getMetricsHealthSnapshotIntervalInMilliseconds());
+        $this->assertSame(0, $this->configuration->getMetricsRollingStatisticalWindowBuckets());
+        $this->assertSame(0, $this->configuration->getMetricsRollingStatisticalWindowInMilliseconds());
+
+        $this->assertFalse($this->configuration->isRequestCacheEnabled());
+
+        $this->assertFalse($this->configuration->isFallbackEnabled());
+
+        $this->assertFalse($this->configuration->isRequestLogEnabled());
+    }
+
     public function testConfigurationAppliesCircuitBreakerConfigurationFromIterator()
     {
         $this->assertSame(25, $this->configuration->getCircuitBreakerErrorThresholdPercentage());

@@ -19,6 +19,7 @@
 namespace Odesk\Phystrix;
 
 use ArrayAccess;
+use ArrayObject;
 use Odesk\Phystrix\Configuration\PhystrixCommandConfiguration;
 use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
@@ -48,7 +49,7 @@ abstract class AbstractCommand
     protected $commandKey;
 
     /**
-     * @var ArrayAccess
+     * @var array
      */
     protected $config;
 
@@ -176,9 +177,11 @@ abstract class AbstractCommand
     {
         $commandKey = $this->getCommandKey();
         $this->config = $phystrixConfig->offsetGet('default');
-        $this->config->merge($phystrixConfig->offsetGet($commandKey));
+        if ($phystrixConfig->offsetExists($commandKey)){
+            $this->config = array_merge($this->config, $phystrixConfig->offsetGet($commandKey));
+        }
 
-        $this->config = new PhystrixCommandConfiguration($this->config);
+        $this->commandConfig = new PhystrixCommandConfiguration(new ArrayObject($this->config));
     }
 
     /**

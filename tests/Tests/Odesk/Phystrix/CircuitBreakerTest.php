@@ -48,23 +48,22 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
         $commandConfig =
             $this->getMockBuilder('Odesk\Phystrix\Configuration\CircuitBreakerConfigurationInterface')
                 ->setMethods(array(
-                    'getErrorThresholdPercentage',
-                    'getRequestVolumeThreshold',
-                    'getSleepWindowInMilliseconds',
-                    'isEnabled',
-                    'isForceClosed',
-                    'isForceOpened',
+                    'getCircuitBreakerErrorThresholdPercentage',
+                    'getCircuitBreakerRequestVolumeThreshold',
+                    'getCircuitBreakerSleepWindowInMilliseconds',
+                    'isCircuitBreakerEnabled',
+                    'isCircuitBreakerForceClosed',
+                    'isCircuitBreakerForceOpened',
                 ))->getMock();
 
-        $commandConfig->method('getErrorThresholdPercentage')->willReturn(20);
-        $commandConfig->method('getRequestVolumeThreshold')->willReturn(50);
-        $commandConfig->method('getSleepWindowInMilliseconds')->willReturn(5000);
-        $commandConfig->method('isForceClosed')->willReturn($isForceClosed);
-        $commandConfig->method('isForceOpened')->willReturn($isForceOpened);
+        $commandConfig->method('getCircuitBreakerErrorThresholdPercentage')->willReturn(20);
+        $commandConfig->method('getCircuitBreakerRequestVolumeThreshold')->willReturn(50);
+        $commandConfig->method('getCircuitBreakerSleepWindowInMilliseconds')->willReturn(5000);
+        $commandConfig->method('isCircuitBreakerForceClosed')->willReturn($isForceClosed);
+        $commandConfig->method('isCircuitBreakerForceOpened')->willReturn($isForceOpened);
 
         return new CircuitBreaker('TestCommand', $this->metrics, $commandConfig, $this->stateStorage);
     }
-
 
     public function testIsOpenReturnsTrueImmediately()
     {
