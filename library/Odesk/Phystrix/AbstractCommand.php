@@ -176,7 +176,12 @@ abstract class AbstractCommand
     public function initializeConfig(ArrayAccess $phystrixConfig)
     {
         $commandKey = $this->getCommandKey();
-        $this->config = $phystrixConfig->offsetGet('default');
+
+        $this->config =
+            $phystrixConfig->offsetExists('default')
+                ? $phystrixConfig->offsetGet('default')
+                : array();
+
         if ($phystrixConfig->offsetExists($commandKey)){
             $this->config = array_merge($this->config, $phystrixConfig->offsetGet($commandKey));
         }
