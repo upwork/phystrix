@@ -58,6 +58,13 @@ class PhystrixCommandConfiguration implements
 
     public function __construct(ArrayAccess $configuration)
     {
+        $this->updateConfiguration($configuration);
+    }
+
+    /**
+     * @param ArrayAccess $configuration
+     */
+    public function updateConfiguration(ArrayAccess $configuration){
         $this->circuitBreakerConfiguration =
             $configuration->offsetExists('circuitBreaker')
                 ? $configuration->offsetGet('circuitBreaker')

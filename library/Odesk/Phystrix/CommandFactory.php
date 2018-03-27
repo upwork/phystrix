@@ -19,9 +19,7 @@
 namespace Odesk\Phystrix;
 
 use ArrayAccess;
-use ArrayObject;
 use ReflectionClass;
-use Zend\Config\Config;
 use Zend\Di\LocatorInterface;
 
 /**
@@ -31,7 +29,7 @@ use Zend\Di\LocatorInterface;
 class CommandFactory
 {
     /**
-     * @var Config
+     * @var ArrayAccess
      */
     protected $config;
 

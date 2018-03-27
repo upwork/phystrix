@@ -187,18 +187,22 @@ abstract class AbstractCommand
     /**
      * Sets configuration for the command, allows to override config in runtime
      *
-     * @param Config $config
+     * @param array $phystrixConfig
      * @param bool $merge
      */
-    public function setConfig(Config $config, $merge = true)
+    public function setConfig(array $phystrixConfig, $merge = true)
     {
         if ($this->config && $merge) {
-            $this->config->merge($config);
+            $this->config = array_merge($this->config, $phystrixConfig);
         } else {
-            $this->config = $config;
+            $this->config = $phystrixConfig;
         }
 
-        $this->commandConfig->updateConfiguration($this->config);
+        if (null === $this->commandConfig) {
+            $this->commandConfig = new PhystrixCommandConfiguration(new ArrayObject($this->config));
+        } else {
+            $this->commandConfig->updateConfiguration(new ArrayObject($this->config));
+        }
     }
 
     /**

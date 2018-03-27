@@ -22,7 +22,6 @@ use Odesk\Phystrix\AbstractCommand;
 use Odesk\Phystrix\Exception\RuntimeException;
 use Odesk\Phystrix\RequestCache;
 use Odesk\Phystrix\RequestLog;
-use Zend\Config\Config;
 
 class CommandTest extends \PHPUnit_Framework_TestCase
 {
@@ -72,7 +71,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $this->requestLog = new RequestLog();
         $this->command->setRequestLog($this->requestLog);
         $this->command->setCircuitBreakerFactory($this->circuitBreakerFactory);
-        $this->command->setConfig(new Config(array(
+        $this->command->setConfig(array(
             'fallback' => array(
                 'enabled' => true,
             ),
@@ -82,7 +81,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
             'requestLog' => array(
                 'enabled' => true,
             ),
-        ), true));
+        ), true);
     }
 
     /**
@@ -119,11 +118,11 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testSetTestMergesConfig()
     {
         $command = new CommandMock();
-        $command->setConfig(new Config(array('a' => 1), true));
-        $command->setConfig(new Config(array('b' => 2), true));
-        $this->assertAttributeEquals(new Config(array('a' => 1, 'b' => 2), true), 'config', $command);
-        $command->setConfig(new Config(array('c' => 3), true), false); // false to skip merge
-        $this->assertAttributeEquals(new Config(array('c' => 3), true), 'config', $command);
+        $command->setConfig(array('a' => 1), true);
+        $command->setConfig(array('b' => 2), true);
+        $this->assertAttributeEquals(array('a' => 1, 'b' => 2), 'config', $command);
+        $command->setConfig(array('c' => 3), false); // false to skip merge
+        $this->assertAttributeEquals(array('c' => 3), 'config', $command);
     }
 
     public function testExecuteDefaultCommandKey()
@@ -178,11 +177,11 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testRequestLogOff()
     {
         $this->setUpCommonExpectations();
-        $this->command->setConfig(new Config(array(
+        $this->command->setConfig(array(
             'requestLog' => array(
                 'enabled' => false,
             ),
-        )));
+        ));
         $this->assertEmpty($this->requestLog->getExecutedCommands());
         $this->assertEquals('run result', $this->command->execute());
         $this->assertEmpty($this->requestLog->getExecutedCommands());
@@ -203,11 +202,11 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
         $command->setRequestCache(new RequestCache());
 
-        $command->setConfig(new Config(array(
+        $command->setConfig(array(
             'requestLog' => array(
                 'enabled' => $logEnabled,
             ),
-        ), true));
+        ), true);
 
         $this->setUpCommonExpectations();
 
@@ -229,17 +228,16 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $command->setCircuitBreakerFactory($this->circuitBreakerFactory);
         $command->setRequestLog($this->requestLog);
 
-        $command->setConfig(new Config(array(
+        $command->setConfig(array(
             'requestCache' => array(
                 'enabled' => $cacheEnabled,
             ),
-        ), true));
+        ), true);
 
         $this->setUpCommonExpectations();
 
         $this->assertEquals('run result', $this->command->execute());
     }
-
 
     /**
      * @return array
@@ -379,7 +377,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testExecuteFallbackDisabled()
     {
         $this->setUpCommonExpectations();
-        $this->command->setConfig(new Config(array('fallback' => array('enabled' => false))));
+        $this->command->setConfig(array('fallback' => array('enabled' => false)));
         $this->commandMetrics->expects($this->never()) // because fallback is disabled
             ->method('markFallbackSuccess');
         $this->commandMetrics->expects($this->never()) // because fallback is disabled
@@ -468,7 +466,7 @@ class CommandTest extends \PHPUnit_Framework_TestCase
     public function testRequestCacheDisabled()
     {
         $this->setUpCommonExpectations();
-        $this->command->setConfig(new Config(array('requestCache' => array('enabled' => false))));
+        $this->command->setConfig(array('requestCache' => array('enabled' => false)));
         /** @var RequestCache|\PHPUnit_Framework_MockObject_MockObject $requestCache */
         $requestCache = $this->getMock('Odesk\Phystrix\RequestCache');
         $requestCache->expects($this->never())
@@ -479,7 +477,6 @@ class CommandTest extends \PHPUnit_Framework_TestCase
         $this->command->setRequestCache($requestCache);
         $this->assertEquals('run result', $this->command->execute());
     }
-
 
     public function testRequestCacheGetCacheKeyNotImplemented()
     {
