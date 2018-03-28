@@ -38,28 +38,32 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
         $this->stateStorage = $this->getMock('Odesk\Phystrix\StateStorageInterface');
     }
 
-    protected function getCircuitBreaker($config = array())
+    /**
+     * @param bool $isForceClosed
+     * @param bool $isForceOpened
+     * @return CircuitBreaker
+     */
+    protected function getCircuitBreaker($isForceClosed = false, $isForceOpened = false)
     {
-        $commandConfig = new \Zend\Config\Config(array(
-            'circuitBreaker' => array(
-                'enabled' => true,
-                'errorThresholdPercentage' => 50,
-                'forceOpen' => false,
-                'forceClosed' => false,
-                'requestVolumeThreshold' => 50,
-                'sleepWindowInMilliseconds' => 5000,
-                'metrics' => array(
-                    'healthSnapshotIntervalInMilliseconds' => 1000,
-                    'rollingStatisticalWindowInMilliseconds' => 10000,
-                    'rollingStatisticalWindowBuckets' => 10,
-                )
-            ),
-        ), true);
-        $commandConfig->merge(new \Zend\Config\Config($config, true));
+        $commandConfig =
+            $this->getMockBuilder('Odesk\Phystrix\Configuration\CircuitBreakerConfigurationInterface')
+                ->setMethods(array(
+                    'getCircuitBreakerErrorThresholdPercentage',
+                    'getCircuitBreakerRequestVolumeThreshold',
+                    'getCircuitBreakerSleepWindowInMilliseconds',
+                    'isCircuitBreakerEnabled',
+                    'isCircuitBreakerForceClosed',
+                    'isCircuitBreakerForceOpened',
+                ))->getMock();
+
+        $commandConfig->method('getCircuitBreakerErrorThresholdPercentage')->willReturn(20);
+        $commandConfig->method('getCircuitBreakerRequestVolumeThreshold')->willReturn(50);
+        $commandConfig->method('getCircuitBreakerSleepWindowInMilliseconds')->willReturn(5000);
+        $commandConfig->method('isCircuitBreakerForceClosed')->willReturn($isForceClosed);
+        $commandConfig->method('isCircuitBreakerForceOpened')->willReturn($isForceOpened);
 
         return new CircuitBreaker('TestCommand', $this->metrics, $commandConfig, $this->stateStorage);
     }
-
 
     public function testIsOpenReturnsTrueImmediately()
     {
@@ -100,10 +104,10 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
         $healthCounts = $this->getMock('Odesk\Phystrix\HealthCountsSnapshot', array(), array(), '', false);
         $healthCounts->expects($this->once())
             ->method('getTotal')
-            ->will($this->returnValue(60)); // total is 60, threshold is set to 50.
+            ->will($this->returnValue(60)); // total is 60, threshold is set to 20.
         $healthCounts->expects($this->once())
             ->method('getErrorPercentage')
-            ->will($this->returnValue(49)); // error percentage threshold is set to 50. 49 should not open the circuit
+            ->will($this->returnValue(19)); // error percentage threshold is set to 20. 19 should not open the circuit
         $this->metrics->expects($this->once())
             ->method('getHealthCounts')
             ->will($this->returnValue($healthCounts));
@@ -151,7 +155,7 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
     {
         $this->stateStorage->expects($this->never())
             ->method('isCircuitOpen'); // making sure it doesn't get to checking if the circuit is open
-        $circuitBreaker = $this->getCircuitBreaker(array('circuitBreaker' => array('forceOpen' => true)));
+        $circuitBreaker = $this->getCircuitBreaker(false, true);
         $this->assertFalse($circuitBreaker->allowRequest());
     }
 
@@ -159,7 +163,7 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
     {
         $this->stateStorage->expects($this->never())
             ->method('isCircuitOpen'); // making sure it doesn't get to checking if the circuit is open
-        $circuitBreaker = $this->getCircuitBreaker(array('circuitBreaker' => array('forceClosed' => true)));
+        $circuitBreaker = $this->getCircuitBreaker(true);
         $this->assertTrue($circuitBreaker->allowRequest());
     }
 

@@ -18,11 +18,13 @@
  */
 namespace Odesk\Phystrix;
 
+use ArrayAccess;
+use ArrayObject;
+use Odesk\Phystrix\Configuration\PhystrixCommandConfiguration;
 use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
 use Odesk\Phystrix\Exception\RuntimeException;
 use Zend\Di\LocatorInterface;
-use Zend\Config\Config;
 use Exception;
 
 /**
@@ -47,11 +49,16 @@ abstract class AbstractCommand
     protected $commandKey;
 
     /**
-     * Command configuration
-     *
-     * @var Config
+     * @var array
      */
     protected $config;
+
+    /**
+     * Command configuration
+     *
+     * @var PhystrixCommandConfiguration
+     */
+    protected $commandConfig;
 
     /**
      * @var CircuitBreakerFactory
@@ -164,31 +171,42 @@ abstract class AbstractCommand
     /**
      * Sets base command configuration from the global phystrix configuration
      *
-     * @param Config $phystrixConfig
+     * @param ArrayAccess $phystrixConfig
      */
-    public function initializeConfig(Config $phystrixConfig)
+    public function initializeConfig(ArrayAccess $phystrixConfig)
     {
         $commandKey = $this->getCommandKey();
-        $config = new Config($phystrixConfig->get('default')->toArray(), true);
-        if ($phystrixConfig->__isset($commandKey)) {
-            $commandConfig = $phystrixConfig->get($commandKey);
-            $config->merge($commandConfig);
+
+        $this->config =
+            $phystrixConfig->offsetExists('default')
+                ? $phystrixConfig->offsetGet('default')
+                : array();
+
+        if ($phystrixConfig->offsetExists($commandKey)){
+            $this->config = array_merge($this->config, $phystrixConfig->offsetGet($commandKey));
         }
-        $this->config = $config;
+
+        $this->commandConfig = new PhystrixCommandConfiguration(new ArrayObject($this->config));
     }
 
     /**
      * Sets configuration for the command, allows to override config in runtime
      *
-     * @param Config $config
+     * @param array $phystrixConfig
      * @param bool $merge
      */
-    public function setConfig(Config $config, $merge = true)
+    public function setConfig(array $phystrixConfig, $merge = true)
     {
         if ($this->config && $merge) {
-            $this->config->merge($config);
+            $this->config = array_merge($this->config, $phystrixConfig);
         } else {
-            $this->config = $config;
+            $this->config = $phystrixConfig;
+        }
+
+        if (null === $this->commandConfig) {
+            $this->commandConfig = new PhystrixCommandConfiguration(new ArrayObject($this->config));
+        } else {
+            $this->commandConfig->updateConfiguration(new ArrayObject($this->config));
         }
     }
 
@@ -203,7 +221,7 @@ abstract class AbstractCommand
             return false;
         }
 
-        return $this->config->get('requestCache')->get('enabled') && $this->getCacheKey() !== null;
+        return $this->commandConfig->isRequestCacheEnabled() && $this->getCacheKey() !== null;
     }
 
     /**
@@ -318,17 +336,17 @@ abstract class AbstractCommand
      */
     private function getMetrics()
     {
-        return $this->commandMetricsFactory->get($this->getCommandKey(), $this->config);
+        return $this->commandMetricsFactory->get($this->getCommandKey(), $this->commandConfig);
     }
 
     /**
      * Circuit breaker for this command key
      *
-     * @return CircuitBreaker
+     * @return CircuitBreakerInterface
      */
     private function getCircuitBreaker()
     {
-        return $this->circuitBreakerFactory->get($this->getCommandKey(), $this->config, $this->getMetrics());
+        return $this->circuitBreakerFactory->get($this->getCommandKey(), $this->commandConfig, $this->getMetrics());
     }
 
     /**
@@ -344,7 +362,7 @@ abstract class AbstractCommand
         $metrics = $this->getMetrics();
         $message = $originalException === null ? 'Short-circuited' : $originalException->getMessage();
         try {
-            if ($this->config->get('fallback')->get('enabled')) {
+            if ($this->commandConfig->isFallbackEnabled()) {
                 try {
                     $executionResult = $this->getFallback();
                     $metrics->markFallbackSuccess();
@@ -460,7 +478,7 @@ abstract class AbstractCommand
      */
     private function recordExecutedCommand()
     {
-        if ($this->requestLog && $this->config->get('requestLog')->get('enabled')) {
+        if ($this->requestLog && $this->commandConfig->isRequestLogEnabled()) {
             $this->requestLog->addExecutedCommand($this);
         }
     }

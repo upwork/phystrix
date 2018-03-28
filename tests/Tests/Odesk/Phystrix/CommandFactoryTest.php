@@ -18,6 +18,7 @@
  */
 namespace Tests\Odesk\Phystrix;
 
+use ArrayObject;
 use Odesk\Phystrix\CircuitBreakerFactory;
 use Odesk\Phystrix\CommandFactory;
 use Odesk\Phystrix\CommandMetricsFactory;
@@ -29,11 +30,11 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetCommand()
     {
-        $config = new \Zend\Config\Config(array(
+        $config = array(
             'default' => array(
                 'fallback' => array('enabled' => true)
             )
-        ));
+        );
         $serviceLocator = new ServiceLocator();
         $stateStorage = $this->getMock('Odesk\Phystrix\StateStorageInterface');
         $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
@@ -41,7 +42,7 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
         $requestCache = new RequestCache();
         $requestLog = new RequestLog();
         $commandFactory = new CommandFactory(
-            $config,
+            new ArrayObject($config),
             $serviceLocator,
             $circuitBreakerFactory,
             $commandMetricsFactory,
@@ -54,9 +55,9 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('test', $command->a);
         $this->assertEquals('hello', $command->b);
         // injects the infrastructure components
-        $expectedDefaultConfig = new \Zend\Config\Config(array(
+        $expectedDefaultConfig = array(
             'fallback' => array('enabled' => true)
-        ), true);
+        );
         $this->assertAttributeEquals($expectedDefaultConfig, 'config', $command);
         $this->assertAttributeEquals($circuitBreakerFactory, 'circuitBreakerFactory', $command);
         $this->assertAttributeEquals($serviceLocator, 'serviceLocator', $command);
@@ -66,7 +67,7 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testGetCommandMergesConfig()
     {
-        $config = new \Zend\Config\Config(array(
+        $config = array(
             'default' => array(
                 'fallback' => array('enabled' => true),
                 'customData' => 12345
@@ -75,13 +76,13 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
                 'fallback' => array('enabled' => false),
                 'circuitBreaker' => array('enabled' => false)
             )
-        ));
+        );
         $serviceLocator = new ServiceLocator();
         $stateStorage = $this->getMock('Odesk\Phystrix\StateStorageInterface');
         $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
         $commandMetricsFactory = new CommandMetricsFactory($stateStorage);
         $commandFactory = new CommandFactory(
-            $config,
+            new ArrayObject($config),
             $serviceLocator,
             $circuitBreakerFactory,
             $commandMetricsFactory,
@@ -90,11 +91,11 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
         );
         /** @var FactoryCommandMock $command */
         $command = $commandFactory->getCommand('Tests\Odesk\Phystrix\FactoryCommandMock', 'test', 'hello');
-        $expectedConfig = new \Zend\Config\Config(array(
+        $expectedConfig = array(
             'fallback' => array('enabled' => false),
             'circuitBreaker' => array('enabled' => false),
             'customData' => 12345
-        ), true);
+        );
         $this->assertAttributeEquals($expectedConfig, 'config', $command);
     }
 }

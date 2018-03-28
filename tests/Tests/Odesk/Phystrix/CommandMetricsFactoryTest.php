@@ -23,16 +23,25 @@ use Odesk\Phystrix\CommandMetricsFactory;
 
 class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @throws \ReflectionException
+     */
     public function testGet()
     {
-        $config = new \Zend\Config\Config(array(
-            'metrics' => array(
-                'rollingStatisticalWindowInMilliseconds' => 10000,
-                'rollingStatisticalWindowBuckets' => 10,
-                'healthSnapshotIntervalInMilliseconds' => 2000,
-            )
-        ));
+        $config =
+            $this->getMockBuilder('Odesk\Phystrix\Configuration\MetricsConfigurationInterface')
+                ->setMethods(array(
+                    'getMetricsHealthSnapshotIntervalInMilliseconds',
+                    'getMetricsRollingStatisticalWindowBuckets',
+                    'getMetricsRollingStatisticalWindowInMilliseconds'
+                ))
+                ->getMock();
+
+        $config->method('getMetricsHealthSnapshotIntervalInMilliseconds')->willReturn(2000);
+        $config->method('getMetricsRollingStatisticalWindowInMilliseconds')->willReturn(10000);
+        $config->method('getMetricsRollingStatisticalWindowBuckets')->willReturn(10);
         $factory = new CommandMetricsFactory(new ArrayStateStorage());
+
         $metrics = $factory->get('TestCommand', $config);
         $this->assertAttributeEquals(2000, 'healthSnapshotIntervalInMilliseconds', $metrics);
 

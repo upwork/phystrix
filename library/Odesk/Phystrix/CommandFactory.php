@@ -18,8 +18,8 @@
  */
 namespace Odesk\Phystrix;
 
+use ArrayAccess;
 use ReflectionClass;
-use Zend\Config\Config;
 use Zend\Di\LocatorInterface;
 
 /**
@@ -29,7 +29,7 @@ use Zend\Di\LocatorInterface;
 class CommandFactory
 {
     /**
-     * @var Config
+     * @var ArrayAccess
      */
     protected $config;
 
@@ -61,7 +61,7 @@ class CommandFactory
     /**
      * Constructor
      *
-     * @param Config $config
+     * @param ArrayAccess $config
      * @param LocatorInterface $serviceLocator
      * @param CircuitBreakerFactory $circuitBreakerFactory
      * @param CommandMetricsFactory $commandMetricsFactory
@@ -69,7 +69,7 @@ class CommandFactory
      * @param RequestLog $requestLog
      */
     public function __construct(
-        Config $config,
+        ArrayAccess $config,
         LocatorInterface $serviceLocator,
         CircuitBreakerFactory $circuitBreakerFactory,
         CommandMetricsFactory $commandMetricsFactory,
@@ -89,6 +89,7 @@ class CommandFactory
      *
      * @param string $class
      * @return AbstractCommand
+     * @throws \ReflectionException
      */
     public function getCommand($class)
     {
