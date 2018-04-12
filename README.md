@@ -1,5 +1,11 @@
 [![Build Status](https://travis-ci.org/upwork/phystrix.svg)](https://travis-ci.org/upwork/phystrix)
 
+### PHP7使用说明
+
+PHP7使用 [Apcu.so](http://pecl.php.net/package/APCu)
+
+本fork版，修改了 ApcStateStorage.php，只是将apc修改成apcu了：）
+
 ### About Phystrix
 
 In distributed systems with PHP frontend, application talks to a number of remote services. Be it a set of services of your own, a 3rd party RESTful API or a legacy component that requires networking interaction: in complex, high-load systems occasional failure cannot be avoided.

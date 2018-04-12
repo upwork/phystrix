@@ -1,18 +1,18 @@
 {
-    "name": "odesk/phystrix",
-    "description": "Protocol agnostic library for latency and fault isolation",
+    "name": "timerlau/phystrix",
+    "type": "package",
+    "description": "分布式容错器 Phystrix",
+    "keywords": ["容错器", "phystrix", "php7 phystrix"],
+    "homepage": "https://github.com/timerlau/phystrix.git",
     "license": "Apache-2.0",
-    "keywords": [
-        "odesk",
-        "phystrix"
-    ],
     "autoload": {
         "psr-0": {
             "Odesk\\": "library/"
         }
     },
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=7.0.0",
+        "ext-apcu": "*",
         "zendframework/zend-config": "~2.2",
         "zendframework/zend-di": "~2.2"
     },
@@ -20,8 +20,6 @@
         "phpunit/phpunit": "~4.2"
     },
     "extra": {
-        "branch-alias": {
-            "dev-master": "2.0-dev"
-        }
+        
     }
 }
