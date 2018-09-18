@@ -26,6 +26,11 @@ Recommended way to install Phystrix is by using [Composer](https://getcomposer.o
 
 To store and share metrics between requests, Phystrix uses [APC](http://php.net/manual/en/book.apc.php), so make sure you have the PHP extension enabled.
 
+### Php 7.2
+
+In php 7 the API for `apcu` changed. You will need to install [apcu-bc](https://github.com/krakjoe/apcu-bc) in addition to `apcu` to use Phystrix.
+The backwards compatibility layer extension must be loaded AFTER `apcu`.
+
 ## Usage
 
 To protect a point of access to remote service, we use the [command pattern](http://en.wikipedia.org/wiki/Command_pattern). Here is how a minimal implementation could look like:
