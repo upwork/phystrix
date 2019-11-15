@@ -117,7 +117,7 @@ abstract class AbstractCommand
             return $this->commandKey;
         } else {
             // If the command key hasn't been defined in the class we use the current class name
-            return get_class($this);
+            return \get_class($this);
         }
     }
 
@@ -353,7 +353,7 @@ abstract class AbstractCommand
                 } catch (FallbackNotAvailableException $fallbackException) {
                     throw new RuntimeException(
                         $message . ' and no fallback available',
-                        get_class($this),
+                        \get_class($this),
                         $originalException
                     );
                 } catch (Exception $fallbackException) {
@@ -361,7 +361,7 @@ abstract class AbstractCommand
                     $this->recordExecutionEvent(self::EVENT_FALLBACK_FAILURE);
                     throw new RuntimeException(
                         $message . ' and failed retrieving fallback',
-                        get_class($this),
+                        \get_class($this),
                         $originalException,
                         $fallbackException
                     );
@@ -369,7 +369,7 @@ abstract class AbstractCommand
             } else {
                 throw new RuntimeException(
                     $message . ' and fallback disabled',
-                    get_class($this),
+                    \get_class($this),
                     $originalException
                 );
             }
@@ -452,7 +452,7 @@ abstract class AbstractCommand
      */
     private function getTimeInMilliseconds()
     {
-        return floor(microtime(true) * 1000);
+        return \floor(\microtime(true) * 1000);
     }
 
     /**

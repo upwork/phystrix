@@ -125,7 +125,7 @@ class MetricsCounter
      */
     private function getTimeInMilliseconds()
     {
-        return floor(microtime(true) * 1000);
+        return \floor(\microtime(true) * 1000);
     }
 
     /**
@@ -148,7 +148,7 @@ class MetricsCounter
     private function getBucketIndex($bucketNumber, $time)
     {
         // Getting unique bucket index
-        return floor(($time - $bucketNumber * $this->bucketInMilliseconds) / $this->bucketInMilliseconds);
+        return \floor(($time - $bucketNumber * $this->bucketInMilliseconds) / $this->bucketInMilliseconds);
     }
 
     /**

@@ -130,11 +130,11 @@ class RequestLog
         $display = $executedCommand->getCommandKey() . "[";
         $events = $executedCommand->getExecutionEvents();
 
-        if (count($events) > 0) {
+        if (\count($events) > 0) {
             foreach ($events as $event) {
                 $display .= "{$event}, ";
             }
-            $display = substr($display, 0, -2);
+            $display = \substr($display, 0, -2);
         } else {
             $display .= "Executed";
         }

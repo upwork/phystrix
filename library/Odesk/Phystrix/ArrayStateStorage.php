@@ -144,6 +144,6 @@ class ArrayStateStorage implements StateStorageInterface
      */
     private function getTimeInMilliseconds()
     {
-        return floor(microtime(true) * 1000);
+        return \floor(\microtime(true) * 1000);
     }
 }

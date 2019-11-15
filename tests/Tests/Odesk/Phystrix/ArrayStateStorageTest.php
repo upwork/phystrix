@@ -93,13 +93,13 @@ class ArrayStateStorageTest extends \PHPUnit_Framework_TestCase
         // no matter how many times we check
         $this->assertFalse($this->storage->allowSingleTest('TestCommand', 900));
         // but after the period passes...
-        sleep(1);
+        \sleep(1);
         // we can check again
         $this->assertTrue($this->storage->allowSingleTest('TestCommand', 900));
         // but only once
         $this->assertFalse($this->storage->allowSingleTest('TestCommand', 900));
         // because each check sets new time
-        sleep(1);
+        \sleep(1);
         $this->assertTrue($this->storage->allowSingleTest('TestCommand', 900));
     }
 }

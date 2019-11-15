@@ -138,7 +138,7 @@ class CommandMetrics
     public function getHealthCounts()
     {
         // current time in milliseconds
-        $now = microtime(true) * 1000;
+        $now = \microtime(true) * 1000;
         // we should make a new snapshot in case there isn't one yet or when the snapshot interval time has passed
         if (!$this->lastSnapshot
             || $now - $this->lastSnapshot->getTime() >= $this->healthSnapshotIntervalInMilliseconds) {

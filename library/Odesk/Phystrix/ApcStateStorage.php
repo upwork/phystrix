@@ -36,7 +36,7 @@ class ApcStateStorage implements StateStorageInterface
      */
     public function __construct()
     {
-        if (!extension_loaded('apc')) {
+        if (!\extension_loaded('apc')) {
             throw new Exception\ApcNotLoadedException('"apc" PHP extension is required for Phystrix to work');
         }
     }
@@ -111,7 +111,7 @@ class ApcStateStorage implements StateStorageInterface
         // the single test blocked flag will expire automatically in $sleepingWindowInMilliseconds
         // thus allowing us a single test. Notice, APC doesn't allow us to use
         // expire time less than a second.
-        $sleepingWindowInSeconds = ceil($sleepingWindowInMilliseconds / 1000);
+        $sleepingWindowInSeconds = \ceil($sleepingWindowInMilliseconds / 1000);
         apc_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
     }
 
@@ -126,7 +126,7 @@ class ApcStateStorage implements StateStorageInterface
     {
         $singleTestFlagKey = $this->prefix($commandKey . self::SINGLE_TEST_BLOCKED);
         // using 'add' enforces thread safety.
-        $sleepingWindowInSeconds = ceil($sleepingWindowInMilliseconds / 1000);
+        $sleepingWindowInSeconds = \ceil($sleepingWindowInMilliseconds / 1000);
         // another APC limitation is that within the current request variables will never expire.
         return (boolean) apc_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
     }

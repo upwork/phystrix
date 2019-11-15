@@ -92,8 +92,8 @@ class CommandFactory
      */
     public function getCommand($class)
     {
-        $parameters = func_get_args();
-        array_shift($parameters);
+        $parameters = \func_get_args();
+        \array_shift($parameters);
 
         $reflection = new ReflectionClass($class);
         /** @var AbstractCommand $command */

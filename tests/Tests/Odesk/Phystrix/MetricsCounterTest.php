@@ -52,7 +52,7 @@ class MetricsCounterTest extends \PHPUnit_Framework_TestCase
     protected function getExpectedBucketIndex($bucketNumber)
     {
         $timeInMilliseconds = \Odesk\Phystrix\microtime() * 1000;
-        return floor(($timeInMilliseconds - $bucketNumber * 1000) / 1000);
+        return \floor(($timeInMilliseconds - $bucketNumber * 1000) / 1000);
     }
 
     public function testAdd()

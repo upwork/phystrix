@@ -92,7 +92,7 @@ class RequestCache
      */
     public function exists($commandKey, $cacheKey)
     {
-        return array_key_exists($commandKey, $this->cachedResults)
-            && array_key_exists($cacheKey, $this->cachedResults[$commandKey]);
+        return \array_key_exists($commandKey, $this->cachedResults)
+            && \array_key_exists($cacheKey, $this->cachedResults[$commandKey]);
     }
 }
