@@ -36,8 +36,8 @@ class ApcStateStorage implements StateStorageInterface
      */
     public function __construct()
     {
-        if (!extension_loaded('apc')) {
-            throw new Exception\ApcNotLoadedException('"apc" PHP extension is required for Phystrix to work');
+        if (!extension_loaded('apcu')) {
+            throw new Exception\ApcNotLoadedException('"apcu" PHP extension is required for Phystrix to work');
         }
     }
 
@@ -63,7 +63,7 @@ class ApcStateStorage implements StateStorageInterface
     public function getBucket($commandKey, $type, $index)
     {
         $bucketName = $this->prefix($commandKey . '_' . $type . '_' . $index);
-        return apc_fetch($bucketName);
+        return apcu_fetch($bucketName);
     }
 
     /**
@@ -76,8 +76,8 @@ class ApcStateStorage implements StateStorageInterface
     public function incrementBucket($commandKey, $type, $index)
     {
         $bucketName = $this->prefix($commandKey . '_' . $type . '_' . $index);
-        if (!apc_add($bucketName, 1, self::BUCKET_EXPIRE_SECONDS)) {
-            apc_inc($bucketName);
+        if (!apcu_add($bucketName, 1, self::BUCKET_EXPIRE_SECONDS)) {
+            apcu_inc($bucketName);
         }
     }
 
@@ -92,7 +92,7 @@ class ApcStateStorage implements StateStorageInterface
     {
         $bucketName = $this->prefix($commandKey . '_' . $type . '_' . $index);
         if (apc_exists($bucketName)) {
-            apc_store($bucketName, 0, self::BUCKET_EXPIRE_SECONDS);
+            apcu_store($bucketName, 0, self::BUCKET_EXPIRE_SECONDS);
         }
     }
 
@@ -107,12 +107,12 @@ class ApcStateStorage implements StateStorageInterface
         $openedKey = $this->prefix($commandKey . self::OPENED_NAME);
         $singleTestFlagKey = $this->prefix($commandKey . self::SINGLE_TEST_BLOCKED);
 
-        apc_store($openedKey, true);
+        apcu_store($openedKey, true);
         // the single test blocked flag will expire automatically in $sleepingWindowInMilliseconds
         // thus allowing us a single test. Notice, APC doesn't allow us to use
         // expire time less than a second.
         $sleepingWindowInSeconds = ceil($sleepingWindowInMilliseconds / 1000);
-        apc_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
+        apcu_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
     }
 
     /**
@@ -128,7 +128,7 @@ class ApcStateStorage implements StateStorageInterface
         // using 'add' enforces thread safety.
         $sleepingWindowInSeconds = ceil($sleepingWindowInMilliseconds / 1000);
         // another APC limitation is that within the current request variables will never expire.
-        return (boolean) apc_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
+        return (boolean) apcu_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
     }
 
     /**
@@ -140,7 +140,7 @@ class ApcStateStorage implements StateStorageInterface
     public function isCircuitOpen($commandKey)
     {
         $openedKey = $this->prefix($commandKey . self::OPENED_NAME);
-        return (boolean) apc_fetch($openedKey);
+        return (boolean) apcu_fetch($openedKey);
     }
 
     /**
@@ -151,6 +151,6 @@ class ApcStateStorage implements StateStorageInterface
     public function closeCircuit($commandKey)
     {
         $openedKey = $this->prefix($commandKey . self::OPENED_NAME);
-        apc_store($openedKey, false);
+        apcu_store($openedKey, false);
     }
 }

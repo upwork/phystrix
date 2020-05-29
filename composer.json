@@ -12,7 +12,8 @@
         }
     },
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=7.2.*",
+        "ext-apcu": "*",
         "zendframework/zend-config": "~2.2",
         "zendframework/zend-di": "~2.2"
     },
