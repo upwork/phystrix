@@ -109,7 +109,9 @@ class ArrayStateStorage implements StateStorageInterface
             return true;
         } else {
             $allow = $this->openCircuits[$commandKey] < $this->getTimeInMilliseconds();
-            $this->openCircuits[$commandKey] = $this->getTimeInMilliseconds() + $sleepingWindowInMilliseconds;
+            if($allow) {
+                $this->openCircuits[$commandKey] = $this->getTimeInMilliseconds() + $sleepingWindowInMilliseconds;
+            }
             return $allow;
         }
     }
