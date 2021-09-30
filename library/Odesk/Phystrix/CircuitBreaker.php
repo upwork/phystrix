@@ -18,7 +18,7 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Laminas\Config\Config;
 
 /**
  * Circuit-breaker logic that is hooked into AbstractCommand execution and will stop allowing executions

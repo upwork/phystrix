@@ -22,7 +22,7 @@ use Odesk\Phystrix\AbstractCommand;
 use Odesk\Phystrix\Exception\RuntimeException;
 use Odesk\Phystrix\RequestCache;
 use Odesk\Phystrix\RequestLog;
-use Zend\Config\Config;
+use Laminas\Config\Config;
 
 class CommandTest extends \PHPUnit_Framework_TestCase
 {

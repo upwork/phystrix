@@ -21,8 +21,8 @@ namespace Odesk\Phystrix;
 use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
 use Odesk\Phystrix\Exception\RuntimeException;
-use Zend\Di\LocatorInterface;
-use Zend\Config\Config;
+use Laminas\Di\LocatorInterface;
+use Laminas\Config\Config;
 use Exception;
 
 /**

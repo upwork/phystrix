@@ -18,7 +18,7 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Laminas\Config\Config;
 
 /**
  * Factory to keep track of and instantiate new command metrics objects when needed

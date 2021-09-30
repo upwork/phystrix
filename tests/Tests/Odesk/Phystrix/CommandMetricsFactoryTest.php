@@ -25,7 +25,7 @@ class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
 {
     public function testGet()
     {
-        $config = new \Zend\Config\Config(array(
+        $config = new \Laminas\Config\Config(array(
             'metrics' => array(
                 'rollingStatisticalWindowInMilliseconds' => 10000,
                 'rollingStatisticalWindowBuckets' => 10,
