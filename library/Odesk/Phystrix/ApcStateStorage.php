@@ -128,7 +128,7 @@ class ApcStateStorage implements StateStorageInterface
         // using 'add' enforces thread safety.
         $sleepingWindowInSeconds = ceil($sleepingWindowInMilliseconds / 1000);
         // another APC limitation is that within the current request variables will never expire.
-        return (boolean) apc_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
+        return apc_add($singleTestFlagKey, true, $sleepingWindowInSeconds);
     }
 
     /**

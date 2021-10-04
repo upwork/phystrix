@@ -18,55 +18,61 @@
  */
 namespace Tests\Odesk\Phystrix;
 
+use Laminas\Config\Config;
 use Odesk\Phystrix\CircuitBreaker;
+use Odesk\Phystrix\CommandMetrics;
+use Odesk\Phystrix\StateStorageInterface;
+use Odesk\Phystrix\HealthCountsSnapshot;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
+class CircuitBreakerTest extends TestCase
 {
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject|CommandMetrics
      */
     protected $metrics;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject|StateStorageInterface
      */
     protected $stateStorage;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->metrics = $this->getMock('Odesk\Phystrix\CommandMetrics', array(), array(), '', false);
-        $this->stateStorage = $this->getMock('Odesk\Phystrix\StateStorageInterface');
+        $this->metrics = $this->createMock(CommandMetrics::class);
+        $this->stateStorage = $this->createMock(StateStorageInterface::class);
     }
 
-    protected function getCircuitBreaker($config = array())
+    protected function getCircuitBreaker($config = []): CircuitBreaker
     {
-        $commandConfig = new \Zend\Config\Config(array(
-            'circuitBreaker' => array(
+        $commandConfig = new Config([
+            'circuitBreaker' => [
                 'enabled' => true,
                 'errorThresholdPercentage' => 50,
                 'forceOpen' => false,
                 'forceClosed' => false,
                 'requestVolumeThreshold' => 50,
                 'sleepWindowInMilliseconds' => 5000,
-                'metrics' => array(
+                'metrics' => [
                     'healthSnapshotIntervalInMilliseconds' => 1000,
                     'rollingStatisticalWindowInMilliseconds' => 10000,
                     'rollingStatisticalWindowBuckets' => 10,
-                )
-            ),
-        ), true);
-        $commandConfig->merge(new \Zend\Config\Config($config, true));
+                ]
+            ],
+        ], true);
+        $commandConfig->merge(new Config($config, true));
 
         return new CircuitBreaker('TestCommand', $this->metrics, $commandConfig, $this->stateStorage);
     }
 
 
-    public function testIsOpenReturnsTrueImmediately()
+    public function testIsOpenReturnsTrueImmediately(): void
     {
         $this->stateStorage->expects($this->once())
             ->method('isCircuitOpen')
             ->with($this->equalTo('TestCommand'))
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->metrics->expects($this->never())
             ->method('getHealthCounts');
@@ -74,55 +80,55 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->getCircuitBreaker()->isOpen());
     }
 
-    public function testIsOpenNotPastTheThreshold()
+    public function testIsOpenNotPastTheThreshold(): void
     {
         $this->stateStorage->expects($this->once())
             ->method('isCircuitOpen')
             ->with($this->equalTo('TestCommand'))
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
-        $healthCounts = $this->getMock('Odesk\Phystrix\HealthCountsSnapshot', array(), array(), '', false);
+        $healthCounts = $this->createMock(HealthCountsSnapshot::class);
         $healthCounts->expects($this->once())
             ->method('getTotal')
-            ->will($this->returnValue(47)); // total is 47, threshold is set to 50.
+            ->willReturn(47); // total is 47, threshold is set to 50.
         $healthCounts->expects($this->never())
             ->method('getErrorPercentage'); // making sure it doesn't make it to error percentage checking logic
 
         $this->metrics->expects($this->once())
             ->method('getHealthCounts')
-            ->will($this->returnValue($healthCounts));
+            ->willReturn($healthCounts);
 
         $this->assertFalse($this->getCircuitBreaker()->isOpen());
     }
 
-    public function testIsOpenErrorPercentageNotBigEnough()
+    public function testIsOpenErrorPercentageNotBigEnough(): void
     {
-        $healthCounts = $this->getMock('Odesk\Phystrix\HealthCountsSnapshot', array(), array(), '', false);
+        $healthCounts = $this->createMock(HealthCountsSnapshot::class);
         $healthCounts->expects($this->once())
             ->method('getTotal')
-            ->will($this->returnValue(60)); // total is 60, threshold is set to 50.
+            ->willReturn(60); // total is 60, threshold is set to 50.
         $healthCounts->expects($this->once())
             ->method('getErrorPercentage')
-            ->will($this->returnValue(49)); // error percentage threshold is set to 50. 49 should not open the circuit
+            ->willReturn(49); // error percentage threshold is set to 50. 49 should not open the circuit
         $this->metrics->expects($this->once())
             ->method('getHealthCounts')
-            ->will($this->returnValue($healthCounts));
+            ->willReturn($healthCounts);
 
         $this->assertFalse($this->getCircuitBreaker()->isOpen());
     }
 
-    public function testIsOpenOpensCircuit()
+    public function testIsOpenOpensCircuit(): void
     {
-        $healthCounts = $this->getMock('Odesk\Phystrix\HealthCountsSnapshot', array(), array(), '', false);
+        $healthCounts = $this->createMock(HealthCountsSnapshot::class);
         $healthCounts->expects($this->once())
             ->method('getTotal')
-            ->will($this->returnValue(60)); // total is 60, threshold is set to 50.
+            ->willReturn(60); // total is 60, threshold is set to 50.
         $healthCounts->expects($this->once())
             ->method('getErrorPercentage')
-            ->will($this->returnValue(51)); // error percentage threshold is set to 50. 51 should open the circuit
+            ->willReturn(51); // error percentage threshold is set to 50. 51 should open the circuit
         $this->metrics->expects($this->once())
             ->method('getHealthCounts')
-            ->will($this->returnValue($healthCounts));
+            ->willReturn($healthCounts);
 
         $this->stateStorage->expects($this->once())
             ->method('openCircuit')
@@ -131,44 +137,39 @@ class CircuitBreakerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->getCircuitBreaker()->isOpen());
     }
 
-    public function testAllowSingleTest()
+    public function testAllowSingleTest(): void
     {
-        $this->stateStorage->expects($this->at(0))
+        $this->stateStorage
             ->method('allowSingleTest')
-            ->with($this->equalTo('TestCommand'), $this->equalTo(5000))
-            ->will($this->returnValue(false));
-
-        $this->stateStorage->expects($this->at(1))
-            ->method('allowSingleTest')
-            ->with($this->equalTo('TestCommand'), $this->equalTo(5000))
-            ->will($this->returnValue(true));
+            ->withConsecutive(['TestCommand', 5000], ['TestCommand', 5000])
+            ->willReturnOnConsecutiveCalls(false, true);
 
         $this->assertFalse($this->getCircuitBreaker()->allowSingleTest());
         $this->assertTrue($this->getCircuitBreaker()->allowSingleTest());
     }
 
-    public function testAllowRequestForceOpen()
+    public function testAllowRequestForceOpen(): void
     {
         $this->stateStorage->expects($this->never())
             ->method('isCircuitOpen'); // making sure it doesn't get to checking if the circuit is open
-        $circuitBreaker = $this->getCircuitBreaker(array('circuitBreaker' => array('forceOpen' => true)));
+        $circuitBreaker = $this->getCircuitBreaker(['circuitBreaker' => ['forceOpen' => true]]);
         $this->assertFalse($circuitBreaker->allowRequest());
     }
 
-    public function testAllowRequestForceClose()
+    public function testAllowRequestForceClose(): void
     {
         $this->stateStorage->expects($this->never())
             ->method('isCircuitOpen'); // making sure it doesn't get to checking if the circuit is open
-        $circuitBreaker = $this->getCircuitBreaker(array('circuitBreaker' => array('forceClosed' => true)));
+        $circuitBreaker = $this->getCircuitBreaker(['circuitBreaker' => ['forceClosed' => true]]);
         $this->assertTrue($circuitBreaker->allowRequest());
     }
 
-    public function testMarkSuccessClosesCircuitIfOpenAndResetCounter()
+    public function testMarkSuccessClosesCircuitIfOpenAndResetCounter(): void
     {
         $this->stateStorage->expects($this->once())
             ->method('isCircuitOpen')
             ->with($this->equalTo('TestCommand'))
-            ->will($this->returnValue(true));
+            ->willReturn(true);
         $this->stateStorage->expects($this->once())
             ->method('closeCircuit')
             ->with($this->equalTo('TestCommand'));

@@ -12,12 +12,13 @@
         }
     },
     "require": {
-        "php": ">=5.3.3",
-        "zendframework/zend-config": "~2.2",
-        "zendframework/zend-di": "~2.2"
+        "php": ">=7.4",
+        "laminas/laminas-config": "~2.2",
+        "laminas/laminas-di": "~2.2"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.2"
+        "roave/security-advisories": "dev-latest",
+        "phpunit/phpunit": "^9.5"
     },
     "extra": {
         "branch-alias": {

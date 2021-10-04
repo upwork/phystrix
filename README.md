@@ -74,7 +74,7 @@ Notice, the extra parameters you pass to the factory’s getCommand method are f
 The factory is instantiated as follows:
 
 ```php
-use Zend\Config\Config;
+use Laminas\Config\Config;
 use Odesk\Phystrix\ApcStateStorage;
 use Odesk\Phystrix\CircuitBreakerFactory;
 use Odesk\Phystrix\CommandMetricsFactory;
@@ -87,12 +87,12 @@ $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
 $commandMetricsFactory = new CommandMetricsFactory($stateStorage);
 
 $phystrix = new CommandFactory(
-    $config, new \Zend\Di\ServiceLocator(), $circuitBreakerFactory, $commandMetricsFactory,
+    $config, new \Laminas\Di\ServiceLocator(), $circuitBreakerFactory, $commandMetricsFactory,
     new \Odesk\Phystrix\RequestCache(), new \Odesk\Phystrix\RequestLog()
 );
 ```
 
-The way you store the configuration files is up to you. Phystrix relies on [Zend\Config](https://github.com/zendframework/Component_ZendConfig)  to manage configurations. In this case, __phystrix-config.php__ is a PHP array:
+The way you store the configuration files is up to you. Phystrix relies on [Laminas\Config](https://github.com/zendframework/Component_ZendConfig)  to manage configurations. In this case, __phystrix-config.php__ is a PHP array:
 
 ```php
 return array(
@@ -160,7 +160,7 @@ Phystrix only works with the command keys. If you have two different commands wi
 Sometimes, you may need to change a parameter when a command is used in a particular context:
 
 ```php
-use Zend\Config\Config;
+use Laminas\Config\Config;
 $myCommand = $phystrix->getCommand('MyCommand', 'Alex');
 $myCommand->setConfig(new Config(array('requestCache' => array('enabled' => false))));
 $result = $myCommand->execute();
@@ -258,7 +258,7 @@ where “timeout” is a custom parameter which Phystrix does not make any use o
     }
 ```
 
-where the client might be a 3rd library you downloaded, or an instance of http client from a framework such as Zend Framework or Symfony or something you wrote yourself.
+where the client might be a 3rd library you downloaded, or an instance of http client from a framework such as Laminas Framework or Symfony or something you wrote yourself.
 
 Of course, having to add this into each command would be suboptimal. Normally, you will have a set of abstract commands, specific to your use cases. E.g. you might have __GenericCurlCommand__ or __GenericGoogleApiCommand__ and __MyCommand__ would extend one of those.
 
@@ -270,10 +270,10 @@ One way would be to extend the __Odesk\Phystrix\CommandFactory__, create your ow
 
 Alternatively, configure the locator instance that __Odesk\Phystrix\CommandFactory__ accepts in the constructor.
 
-The service locator can be anything, implementing the very basic [Zend\Di\LocatorInterface](https://github.com/zendframework/zf2/blob/master/library/Zend/Di/LocatorInterface.php). You can inject an IoC container that will lazily instantiate instance as they are needed, or you can use a simpler, preconfigured, instance of __Zend\Di\ServiceLocator__:
+The service locator can be anything, implementing the very basic [Laminas\Di\LocatorInterface](https://github.com/zendframework/zf2/blob/master/library/Zend/Di/LocatorInterface.php). You can inject an IoC container that will lazily instantiate instance as they are needed, or you can use a simpler, preconfigured, instance of __Laminas\Di\ServiceLocator__:
 
 ```php
-$serviceLocator = \Zend\Di\ServiceLocator();
+$serviceLocator = \Laminas\Di\ServiceLocator();
 $googleApiRemoteService = new GoogleApi(...);
 $serviceLocator->set('googleApi', $googleApiRemoteService);
 

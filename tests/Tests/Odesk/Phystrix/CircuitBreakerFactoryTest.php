@@ -20,60 +20,58 @@ namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\CircuitBreakerFactory;
 use Odesk\Phystrix\CommandMetrics;
+use Odesk\Phystrix\StateStorageInterface;
+use Odesk\Phystrix\NoOpCircuitBreaker;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class CircuitBreakerFactoryTest extends \PHPUnit_Framework_TestCase
+class CircuitBreakerFactoryTest extends TestCase
 {
     /**
-     * @var CircuitBreakerFactory
-     */
-    protected $factory;
-
-    /**
-     * @var CommandMetrics
+     * @var MockObject|CommandMetrics
      */
     protected $metrics;
+    protected CircuitBreakerFactory $factory;
 
-    protected static $baseConfig = array(
-        'circuitBreaker' => array(
+    protected static array $baseConfig = [
+        'circuitBreaker' => [
             'enabled' => true,
-        )
-    );
+        ]
+    ];
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->factory = new CircuitBreakerFactory($this->getMock('Odesk\Phystrix\StateStorageInterface'));
-        $this->metrics = $this->getMock('Odesk\Phystrix\CommandMetrics', array(), array(), '', false);
+        $this->factory = new CircuitBreakerFactory($this->createMock(StateStorageInterface::class));
+        $this->metrics = $this->createMock(CommandMetrics::class);
     }
 
-    public function testGetNoOpCircuitBreaker()
+    public function testGetNoOpCircuitBreaker(): void
     {
         $config = self::$baseConfig;
         $config['circuitBreaker']['enabled'] = false;
-        $config = new \Zend\Config\Config($config);
+        $config = new \Laminas\Config\Config($config);
         $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
-        $this->assertInstanceOf('Odesk\Phystrix\NoOpCircuitBreaker', $circuitBreaker);
+        $this->assertInstanceOf(NoOpCircuitBreaker::class, $circuitBreaker);
     }
 
-    public function testGetInstantiatesOnce()
+    public function testGetInstantiatesOnce(): void
     {
         $config = self::$baseConfig;
         $config['circuitBreaker']['enabled'] = false;
-        $config = new \Zend\Config\Config($config);
+        $config = new \Laminas\Config\Config($config);
         // this will be a NoOpCircuitBreaker
         $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
         // now trying to get the same circuit breaker with a different config
         $circuitBreakerB
-            = $this->factory->get('TestCommand', new \Zend\Config\Config(self::$baseConfig), $this->metrics);
+            = $this->factory->get('TestCommand', new \Laminas\Config\Config(self::$baseConfig), $this->metrics);
         $this->assertEquals($circuitBreaker, $circuitBreakerB);
     }
 
-    public function testGetInjectsParameters()
+    public function testGetInjectsParameters(): void
     {
-        $config = new \Zend\Config\Config(self::$baseConfig);
+        $config = new \Laminas\Config\Config(self::$baseConfig);
         $circuitBreaker = $this->factory->get('TestCommand', $config, $this->metrics);
-        $this->assertAttributeEquals('TestCommand', 'commandKey', $circuitBreaker);
-        $this->assertAttributeEquals($config, 'config', $circuitBreaker);
-        $this->assertAttributeInstanceOf('Odesk\Phystrix\CommandMetrics', 'metrics', $circuitBreaker);
-        $this->assertAttributeInstanceOf('Odesk\Phystrix\StateStorageInterface', 'stateStorage', $circuitBreaker);
+        $this->assertSame('TestCommand', $circuitBreaker->getCommandKey());
+        $this->assertEquals($config, $circuitBreaker->getConfig());
     }
 }

@@ -27,15 +27,8 @@ namespace Odesk\Phystrix;
  */
 class CommandMetrics
 {
-    /**
-     * @var MetricsCounter
-     */
-    private $counter;
-
-    /**
-     * @var integer
-     */
-    private $healthSnapshotIntervalInMilliseconds = 1000;
+    private MetricsCounter $counter;
+    private int $healthSnapshotIntervalInMilliseconds = 1000;
 
     /**
      * @var HealthCountsSnapshot
@@ -54,10 +47,15 @@ class CommandMetrics
         $this->healthSnapshotIntervalInMilliseconds = $snapshotInterval;
     }
 
+    public function getHealthSnapshotIntervalInMilliseconds(): int
+    {
+        return $this->healthSnapshotIntervalInMilliseconds;
+    }
+
     /**
      * Increments success counter
      */
-    public function markSuccess()
+    public function markSuccess(): void
     {
         $this->counter->add(MetricsCounter::SUCCESS);
     }
@@ -65,7 +63,7 @@ class CommandMetrics
     /**
      * Increments from cache counter
      */
-    public function markResponseFromCache()
+    public function markResponseFromCache(): void
     {
         $this->counter->add(MetricsCounter::RESPONSE_FROM_CACHE);
     }
@@ -73,7 +71,7 @@ class CommandMetrics
     /**
      * Increments failure counter
      */
-    public function markFailure()
+    public function markFailure(): void
     {
         $this->counter->add(MetricsCounter::FAILURE);
     }
@@ -81,7 +79,7 @@ class CommandMetrics
     /**
      * Increments fallback success counter
      */
-    public function markFallbackSuccess()
+    public function markFallbackSuccess(): void
     {
         $this->counter->add(MetricsCounter::FALLBACK_SUCCESS);
     }
@@ -89,7 +87,7 @@ class CommandMetrics
     /**
      * Increments fallback failure counter
      */
-    public function markFallbackFailure()
+    public function markFallbackFailure(): void
     {
         $this->counter->add(MetricsCounter::FALLBACK_FAILURE);
     }
@@ -97,7 +95,7 @@ class CommandMetrics
     /**
      * Increments exception thrown counter
      */
-    public function markExceptionThrown()
+    public function markExceptionThrown(): void
     {
         $this->counter->add(MetricsCounter::EXCEPTION_THROWN);
     }
@@ -105,7 +103,7 @@ class CommandMetrics
     /**
      * Increments short circuited counter
      */
-    public function markShortCircuited()
+    public function markShortCircuited(): void
     {
         $this->counter->add(MetricsCounter::SHORT_CIRCUITED);
     }
@@ -114,7 +112,7 @@ class CommandMetrics
      * Resets counters for all metrics
      * may cause some stats to be removed from reporting, see http://goo.gl/dtHN34
      */
-    public function resetCounter()
+    public function resetCounter(): void
     {
         $this->counter->reset();
     }

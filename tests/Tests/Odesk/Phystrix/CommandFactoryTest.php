@@ -23,19 +23,22 @@ use Odesk\Phystrix\CommandFactory;
 use Odesk\Phystrix\CommandMetricsFactory;
 use Odesk\Phystrix\RequestCache;
 use Odesk\Phystrix\RequestLog;
-use Zend\Di\ServiceLocator;
+use Laminas\Di\ServiceLocator;
+use Odesk\Phystrix\StateStorageInterface;
+use PHPUnit\Framework\TestCase;
+use Tests\Odesk\Phystrix\FactoryCommandMock;
 
-class CommandFactoryTest extends \PHPUnit_Framework_TestCase
+class CommandFactoryTest extends TestCase
 {
-    public function testGetCommand()
+    public function testGetCommand(): void
     {
-        $config = new \Zend\Config\Config(array(
-            'default' => array(
-                'fallback' => array('enabled' => true)
-            )
-        ));
+        $config = new \Laminas\Config\Config([
+            'default' => [
+                'fallback' => ['enabled' => true]
+            ]
+        ]);
         $serviceLocator = new ServiceLocator();
-        $stateStorage = $this->getMock('Odesk\Phystrix\StateStorageInterface');
+        $stateStorage = $this->createMock(StateStorageInterface::class);
         $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
         $commandMetricsFactory = new CommandMetricsFactory($stateStorage);
         $requestCache = new RequestCache();
@@ -49,35 +52,31 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
             $requestLog
         );
         /** @var FactoryCommandMock $command */
-        $command = $commandFactory->getCommand('Tests\Odesk\Phystrix\FactoryCommandMock', 'test', 'hello');
+        $command = $commandFactory->getCommand(FactoryCommandMock::class, 'test', 'hello');
         // injects constructor parameters
         $this->assertEquals('test', $command->a);
         $this->assertEquals('hello', $command->b);
         // injects the infrastructure components
-        $expectedDefaultConfig = new \Zend\Config\Config(array(
+        $expectedDefaultConfig = new \Laminas\Config\Config(array(
             'fallback' => array('enabled' => true)
         ), true);
-        $this->assertAttributeEquals($expectedDefaultConfig, 'config', $command);
-        $this->assertAttributeEquals($circuitBreakerFactory, 'circuitBreakerFactory', $command);
-        $this->assertAttributeEquals($serviceLocator, 'serviceLocator', $command);
-        $this->assertAttributeEquals($requestCache, 'requestCache', $command);
-        $this->assertAttributeEquals($requestLog, 'requestLog', $command);
+        $this->assertEquals($expectedDefaultConfig, $command->getConfig());
     }
 
-    public function testGetCommandMergesConfig()
+    public function testGetCommandMergesConfig(): void
     {
-        $config = new \Zend\Config\Config(array(
-            'default' => array(
-                'fallback' => array('enabled' => true),
+        $config = new \Laminas\Config\Config([
+            'default' => [
+                'fallback' => ['enabled' => true],
                 'customData' => 12345
-            ),
-            'Tests\Odesk\Phystrix\FactoryCommandMock' => array(
-                'fallback' => array('enabled' => false),
-                'circuitBreaker' => array('enabled' => false)
-            )
-        ));
+            ],
+            FactoryCommandMock::class => [
+                'fallback' => ['enabled' => false],
+                'circuitBreaker' => ['enabled' => false]
+            ]
+        ]);
         $serviceLocator = new ServiceLocator();
-        $stateStorage = $this->getMock('Odesk\Phystrix\StateStorageInterface');
+        $stateStorage = $this->createMock(StateStorageInterface::class);
         $circuitBreakerFactory = new CircuitBreakerFactory($stateStorage);
         $commandMetricsFactory = new CommandMetricsFactory($stateStorage);
         $commandFactory = new CommandFactory(
@@ -89,12 +88,12 @@ class CommandFactoryTest extends \PHPUnit_Framework_TestCase
             new RequestLog()
         );
         /** @var FactoryCommandMock $command */
-        $command = $commandFactory->getCommand('Tests\Odesk\Phystrix\FactoryCommandMock', 'test', 'hello');
-        $expectedConfig = new \Zend\Config\Config(array(
+        $command = $commandFactory->getCommand(FactoryCommandMock::class, 'test', 'hello');
+        $expectedConfig = new \Laminas\Config\Config(array(
             'fallback' => array('enabled' => false),
             'circuitBreaker' => array('enabled' => false),
             'customData' => 12345
         ), true);
-        $this->assertAttributeEquals($expectedConfig, 'config', $command);
+        $this->assertEquals($expectedConfig, $command->getConfig());
     }
 }

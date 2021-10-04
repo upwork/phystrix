@@ -21,29 +21,28 @@ namespace Tests\Odesk\Phystrix;
 use Odesk\Phystrix\CommandMetrics;
 use Odesk\Phystrix\HealthCountsSnapshot;
 use Odesk\Phystrix\MetricsCounter;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class CommandMetricsTest extends \PHPUnit_Framework_TestCase
+class CommandMetricsTest extends TestCase
 {
-    /**
-     * @var CommandMetrics
-     */
-    protected $metrics;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject|MetricsCounter
      */
     protected $counter;
+    protected CommandMetrics $metrics;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->counter = $this->getMock('Odesk\Phystrix\MetricsCounter', array(), array(), '', false);
+        $this->counter = $this->createMock(MetricsCounter::class);
         $this->metrics = new CommandMetrics($this->counter, 1000);
         // microtime is fixed
         global $globalUnitTestPhystrixMicroTime;
         $globalUnitTestPhystrixMicroTime = 1369861562.1266;
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         // making microtime to fallback to the default behavior
         global $globalUnitTestPhystrixMicroTime;
@@ -98,20 +97,20 @@ class CommandMetricsTest extends \PHPUnit_Framework_TestCase
         $this->metrics->resetCounter();
     }
 
-    public function testGetRollingCount()
+    public function testGetRollingCount(): void
     {
         $this->counter->expects($this->once())->method('get')->with(1);
         $this->metrics->getRollingCount(1);
     }
 
-    public function testGetHealthCountsInitialSnapshot()
+    public function testGetHealthCountsInitialSnapshot(): void
     {
         $this->counter->expects($this->exactly(2))
             ->method('get')
-            ->will($this->returnValueMap(array(
-                array(MetricsCounter::FAILURE, 22),
-                array(MetricsCounter::SUCCESS, 33),
-        )));
+            ->willReturnMap([
+                [MetricsCounter::FAILURE, 22],
+                [MetricsCounter::SUCCESS, 33],
+            ]);
 
         $snapshot = $this->metrics->getHealthCounts();
         $this->assertEquals(22, $snapshot->getFailure());

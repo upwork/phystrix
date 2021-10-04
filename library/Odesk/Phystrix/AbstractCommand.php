@@ -21,8 +21,8 @@ namespace Odesk\Phystrix;
 use Odesk\Phystrix\Exception\BadRequestException;
 use Odesk\Phystrix\Exception\FallbackNotAvailableException;
 use Odesk\Phystrix\Exception\RuntimeException;
-use Zend\Di\LocatorInterface;
-use Zend\Config\Config;
+use Laminas\Di\LocatorInterface;
+use Laminas\Config\Config;
 use Exception;
 
 /**
@@ -95,7 +95,7 @@ abstract class AbstractCommand
     /**
      * Exception thrown if there was one
      *
-     * @var \Exception
+     * @var Exception
      */
     private $executionException;
 
@@ -108,17 +108,15 @@ abstract class AbstractCommand
 
     /**
      * Determines and returns command key, used for circuit breaker grouping and metrics tracking
-     *
-     * @return string
      */
-    public function getCommandKey()
+    public function getCommandKey(): string
     {
         if ($this->commandKey) {
             return $this->commandKey;
-        } else {
-            // If the command key hasn't been defined in the class we use the current class name
-            return get_class($this);
         }
+
+        // If the command key hasn't been defined in the class we use the current class name
+        return get_class($this);
     }
 
     /**
@@ -168,13 +166,13 @@ abstract class AbstractCommand
      */
     public function initializeConfig(Config $phystrixConfig)
     {
-        $commandKey = $this->getCommandKey();
-        $config = new Config($phystrixConfig->get('default')->toArray(), true);
-        if ($phystrixConfig->__isset($commandKey)) {
-            $commandConfig = $phystrixConfig->get($commandKey);
-            $config->merge($commandConfig);
+        $key = $this->getCommandKey();
+        $configuration = new Config($phystrixConfig->get('default')->toArray(), true);
+        if ($phystrixConfig->__isset($key)) {
+            $commandConfig = $phystrixConfig->get($key);
+            $configuration->merge($commandConfig);
         }
-        $this->config = $config;
+        $this->config = $configuration;
     }
 
     /**
@@ -190,6 +188,11 @@ abstract class AbstractCommand
         } else {
             $this->config = $config;
         }
+    }
+
+    public function getConfig(): Config
+    {
+        return $this->config;
     }
 
     /**

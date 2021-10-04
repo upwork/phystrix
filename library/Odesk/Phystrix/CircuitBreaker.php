@@ -18,7 +18,7 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Laminas\Config\Config;
 
 /**
  * Circuit-breaker logic that is hooked into AbstractCommand execution and will stop allowing executions
@@ -29,40 +29,17 @@ use Zend\Config\Config;
  */
 class CircuitBreaker implements CircuitBreakerInterface
 {
-    /**
-     * @var CommandMetrics
-     */
-    private $metrics;
-
-    /**
-     * Phystrix config
-     *
-     * @var Config
-     */
-    private $config;
-
-    /**
-     * @var StateStorageInterface
-     */
-    private $stateStorage;
+    private CommandMetrics $metrics;
+    private Config $config;
+    private StateStorageInterface $stateStorage;
 
     /**
      * String identifier of the group of commands this circuit breaker is responsible for
-     *
-     * @var string
      */
-    private $commandKey;
+    private string $commandKey;
 
-    /**
-     * Constructor
-     *
-     * @param string $commandKey
-     * @param CommandMetrics $metrics
-     * @param Config $commandConfig
-     * @param StateStorageInterface $stateStorage
-     */
     public function __construct(
-        $commandKey,
+        string $commandKey,
         CommandMetrics $metrics,
         Config $commandConfig,
         StateStorageInterface $stateStorage
@@ -71,6 +48,16 @@ class CircuitBreaker implements CircuitBreakerInterface
         $this->metrics = $metrics;
         $this->config = $commandConfig;
         $this->stateStorage = $stateStorage;
+    }
+
+    public function getConfig(): Config
+    {
+        return $this->config;
+    }
+
+    public function getCommandKey(): string
+    {
+        return $this->commandKey;
     }
 
     /**
@@ -96,21 +83,19 @@ class CircuitBreaker implements CircuitBreakerInterface
         $allowedErrorPercentage = $this->config->get('circuitBreaker')->get('errorThresholdPercentage');
         if ($healthCounts->getErrorPercentage() < $allowedErrorPercentage) {
             return false;
-        } else {
-            $this->stateStorage->openCircuit(
-                $this->commandKey,
-                $this->config->get('circuitBreaker')->get('sleepWindowInMilliseconds')
-            );
-            return true;
         }
+
+        $this->stateStorage->openCircuit(
+            $this->commandKey,
+            $this->config->get('circuitBreaker')->get('sleepWindowInMilliseconds')
+        );
+        return true;
     }
 
     /**
      * Whether a single test is allowed now
-     *
-     * @return boolean
      */
-    public function allowSingleTest()
+    public function allowSingleTest(): bool
     {
         return $this->stateStorage->allowSingleTest(
             $this->commandKey,
@@ -120,10 +105,8 @@ class CircuitBreaker implements CircuitBreakerInterface
 
     /**
      * Whether the request is allowed
-     *
-     * @return boolean
      */
-    public function allowRequest()
+    public function allowRequest(): bool
     {
         if ($this->config->get('circuitBreaker')->get('forceOpen')) {
             return false;

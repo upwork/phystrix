@@ -20,52 +20,47 @@ namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\AbstractCommand;
 use Odesk\Phystrix\RequestLog;
+use PHPUnit\Framework\TestCase;
 
-class RequestLogTest extends \PHPUnit_Framework_TestCase
+class RequestLogTest extends TestCase
 {
-    /**
-     * @var RequestLog
-     */
-    protected $requestLog;
+    protected RequestLog $requestLog;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->requestLog = new RequestLog();
     }
 
-    public function testAddAndGet()
+    public function testAddAndGet(): void
     {
-        $commandA = $this->getMock('Odesk\Phystrix\AbstractCommand', array('run'));
-        $commandB = $this->getMock('Odesk\Phystrix\AbstractCommand', array('run'));
+        $commandA = $this->createMock(AbstractCommand::class);
+        $commandB = $this->createMock(AbstractCommand::class);
         $this->assertEmpty($this->requestLog->getExecutedCommands());
         $this->requestLog->addExecutedCommand($commandA);
         $this->requestLog->addExecutedCommand($commandB);
         $this->assertEquals(array($commandA, $commandB), $this->requestLog->getExecutedCommands());
     }
 
-    public function testReadableEmptyLog()
+    public function testReadableEmptyLog(): void
     {
         $this->assertSame('', $this->requestLog->getExecutedCommandsAsString());
     }
 
-    public function testReadableLogWithExecutedCommands()
+    public function testReadableLogWithExecutedCommands(): void
     {
-        $this->addExecutedCommand('commandA', 100, array(AbstractCommand::EVENT_FAILURE));
-        $this->addExecutedCommand('commandA', 50, array(AbstractCommand::EVENT_SUCCESS));
-        $this->addExecutedCommand('commandA', 15, array(AbstractCommand::EVENT_SUCCESS));
-        $this->addExecutedCommand('commandB', -1, array());
+        $this->addExecutedCommand('commandA', 100, [AbstractCommand::EVENT_FAILURE]);
+        $this->addExecutedCommand('commandA', 50, [AbstractCommand::EVENT_SUCCESS]);
+        $this->addExecutedCommand('commandA', 15, [AbstractCommand::EVENT_SUCCESS]);
+        $this->addExecutedCommand('commandB', -1, []);
         $this->assertSame(
             'commandA[FAILURE][100ms], commandA[SUCCESS][65ms]x2, commandB[Executed][0ms]',
             $this->requestLog->getExecutedCommandsAsString()
         );
     }
 
-    protected function addExecutedCommand($commandKey, $executionTime, array $events)
+    protected function addExecutedCommand($commandKey, $executionTime, array $events): void
     {
-        $command = $this->getMock(
-            'Odesk\Phystrix\AbstractCommand',
-            array('run', 'getCommandKey', 'getExecutionEvents', 'getExecutionTimeInMilliseconds')
-        );
+        $command = $this->createMock(AbstractCommand::class);
         $command->expects($this->once())
             ->method('getCommandKey')
             ->willReturn($commandKey);

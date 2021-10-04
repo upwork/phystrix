@@ -16,11 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace Tests\Odesk\Phystrix;
+namespace Tests\Odesk\Phystrix\Exception;
 
 use Odesk\Phystrix\Exception\RuntimeException;
+use PHPUnit\Framework\TestCase;
 
-class RuntimeExceptionTest extends \PHPUnit_Framework_TestCase
+class RuntimeExceptionTest extends TestCase
 {
     public function testGetCommandClass()
     {
