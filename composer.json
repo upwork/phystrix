@@ -17,6 +17,7 @@
         "laminas/laminas-di": "~2.2"
     },
     "require-dev": {
+        "roave/security-advisories": "dev-latest",
         "phpunit/phpunit": "~4.2"
     },
     "extra": {
