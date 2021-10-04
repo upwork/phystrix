@@ -9,3 +9,5 @@ build/
 composer.lock
 nbproject
 tmp/
+vendor/
+.phpunit.result.cache

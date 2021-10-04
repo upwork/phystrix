@@ -19,15 +19,13 @@
 namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\NoOpCircuitBreaker;
+use PHPUnit\Framework\TestCase;
 
-class NoOpCircuitBreakerTest extends \PHPUnit_Framework_TestCase
+class NoOpCircuitBreakerTest extends TestCase
 {
-    /**
-     * @var NoOpCircuitBreaker
-     */
-    protected $circuitBreaker;
+    protected NoOpCircuitBreaker $circuitBreaker;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->circuitBreaker = new NoOpCircuitBreaker();
     }

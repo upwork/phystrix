@@ -18,9 +18,11 @@
  */
 namespace Odesk\Phystrix\Exception;
 
+use Exception;
+
 /**
  * Throw when APC extension is not loaded. APC is required for Phystrix to work.
  */
-class ApcNotLoadedException extends \Exception
+class ApcNotLoadedException extends Exception
 {
 }

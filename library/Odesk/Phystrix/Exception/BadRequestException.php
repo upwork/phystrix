@@ -18,9 +18,11 @@
  */
 namespace Odesk\Phystrix\Exception;
 
+use LogicException;
+
 /**
  * This exception is treated differently and allows to propagate without any stats tracking or fallback logic
  */
-class BadRequestException extends \LogicException
+class BadRequestException extends LogicException
 {
 }

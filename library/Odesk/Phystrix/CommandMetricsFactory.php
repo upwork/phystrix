@@ -18,28 +18,17 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Laminas\Config\Config;
 
 /**
  * Factory to keep track of and instantiate new command metrics objects when needed
  */
 class CommandMetricsFactory
 {
-    /**
-     * @var array
-     */
-    protected $commandMetricsByCommand = array();
+    protected array $commandMetricsByCommand = [];
 
-    /**
-     * @var StateStorageInterface
-     */
-    protected $stateStorage;
+    protected StateStorageInterface $stateStorage;
 
-    /**
-     * Constructor
-     *
-     * @param StateStorageInterface $stateStorage
-     */
     public function __construct(StateStorageInterface $stateStorage)
     {
         $this->stateStorage = $stateStorage;

@@ -16,25 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\MetricsCounter;
+use Odesk\Phystrix\StateStorageInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class MetricsCounterTest extends \PHPUnit_Framework_TestCase
+class MetricsCounterTest extends TestCase
 {
-    /**
-     * @var MetricsCounter
-     */
-    protected $counter;
+    protected MetricsCounter $counter;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject|StateStorageInterface
      */
     protected $stateStorageMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->stateStorageMock = $this->getMock('Odesk\Phystrix\StateStorageInterface');
+        $this->stateStorageMock = $this->createMock(StateStorageInterface::class);
         // 10 seconds statistical window, 10 buckets.
         $this->counter = new MetricsCounter('TestCommand', $this->stateStorageMock, 10000, 10);
         // microtime is fixed
@@ -42,7 +43,7 @@ class MetricsCounterTest extends \PHPUnit_Framework_TestCase
         $globalUnitTestPhystrixMicroTime = 1369861562.1266;
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         // making microtime to fallback to the default behavior
         global $globalUnitTestPhystrixMicroTime;
@@ -55,7 +56,7 @@ class MetricsCounterTest extends \PHPUnit_Framework_TestCase
         return floor(($timeInMilliseconds - $bucketNumber * 1000) / 1000);
     }
 
-    public function testAdd()
+    public function testAdd(): void
     {
         // current bucket (0) index is calculated as follows, using the value from microtime:
         // floor((1369861562.126 - 0 * 1000) / 10000) = 1369861562
@@ -71,19 +72,18 @@ class MetricsCounterTest extends \PHPUnit_Framework_TestCase
         $this->counter->add(MetricsCounter::SUCCESS);
     }
 
-    public function testGet()
+
+    public function testGet(): void
     {
         // going through each bucket, making sure the value for it is requested from the storage
-        for ($bucketNumber = 0; $bucketNumber < 10; $bucketNumber++) {
-            $this->stateStorageMock
-                ->expects($this->at($bucketNumber))
-                ->method('getBucket')
-                ->with(
-                    $this->equalTo('TestCommand'),
-                    $this->equalTo(MetricsCounter::SUCCESS),
-                    $this->equalTo($this->getExpectedBucketIndex($bucketNumber))
-                );
-        }
+        $this->stateStorageMock
+            ->expects($this->exactly(10))
+            ->method('getBucket')
+            ->with(
+                $this->equalTo('TestCommand'),
+                $this->equalTo(MetricsCounter::SUCCESS),
+            );
+
         $this->counter->get(MetricsCounter::SUCCESS);
     }
 }

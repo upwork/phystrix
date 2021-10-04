@@ -18,28 +18,16 @@
  */
 namespace Odesk\Phystrix;
 
-use Zend\Config\Config;
+use Laminas\Config\Config;
 
 /**
  * Factory to keep track of and instantiate new circuit breakers when needed
  */
 class CircuitBreakerFactory
 {
-    /**
-     * @var array
-     */
-    protected $circuitBreakersByCommand = array();
+    protected array $circuitBreakersByCommand = [];
+    protected StateStorageInterface $stateStorage;
 
-    /**
-     * @var StateStorageInterface
-     */
-    protected $stateStorage;
-
-    /**
-     * Constructor
-     *
-     * @param StateStorageInterface $stateStorage
-     */
     public function __construct(StateStorageInterface $stateStorage)
     {
         $this->stateStorage = $stateStorage;

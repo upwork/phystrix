@@ -19,8 +19,8 @@
 namespace Odesk\Phystrix;
 
 use ReflectionClass;
-use Zend\Config\Config;
-use Zend\Di\LocatorInterface;
+use Laminas\Config\Config;
+use Laminas\Di\LocatorInterface;
 
 /**
  * All commands must be created through this factory.

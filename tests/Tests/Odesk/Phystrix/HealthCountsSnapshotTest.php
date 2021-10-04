@@ -19,47 +19,46 @@
 namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\HealthCountsSnapshot;
+use PHPUnit\Framework\TestCase;
 
-class HealthCountsSnapshotTest extends \PHPUnit_Framework_TestCase
+class HealthCountsSnapshotTest extends TestCase
 {
-    /**
-     * @var HealthCountsSnapshot
-     */
-    protected $snapshot;
 
-    protected function setUp()
+    protected HealthCountsSnapshot $snapshot;
+
+    protected function setUp(): void
     {
         $this->snapshot = new HealthCountsSnapshot(1369760400, 12, 24);
     }
 
-    public function testConstruct()
+    public function testConstruct(): void
     {
-        $this->assertAttributeEquals(12, 'successful', $this->snapshot);
-        $this->assertAttributeEquals(24, 'failure', $this->snapshot);
-        $this->assertAttributeEquals(1369760400, 'time', $this->snapshot);
+        $this->assertSame(12, $this->snapshot->getSuccessful());
+        $this->assertSame(24, $this->snapshot->getFailure());
+        $this->assertSame(1369760400, $this->snapshot->getTime());
     }
 
-    public function testGetTime()
+    public function testGetTime(): void
     {
         $this->assertEquals(1369760400, $this->snapshot->getTime());
     }
 
-    public function testGetFailure()
+    public function testGetFailure(): void
     {
         $this->assertEquals(24, $this->snapshot->getFailure());
     }
 
-    public function testGetSuccessful()
+    public function testGetSuccessful(): void
     {
         $this->assertEquals(12, $this->snapshot->getSuccessful());
     }
 
-    public function testGetTotal()
+    public function testGetTotal(): void
     {
         $this->assertEquals(36, $this->snapshot->getTotal());
     }
 
-    public function testGetErrorPercentage()
+    public function testGetErrorPercentage(): void
     {
         $this->assertEquals(66, (integer) $this->snapshot->getErrorPercentage());
     }

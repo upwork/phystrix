@@ -20,12 +20,15 @@ namespace Tests\Odesk\Phystrix;
 
 use Odesk\Phystrix\ArrayStateStorage;
 use Odesk\Phystrix\CommandMetricsFactory;
+use PHPUnit\Framework\TestCase;
+use Odesk\Phystrix\CommandMetrics;
+use ReflectionClass;
 
-class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
+class CommandMetricsFactoryTest extends TestCase
 {
-    public function testGet()
+    public function testGet(): void
     {
-        $config = new \Zend\Config\Config(array(
+        $config = new \Laminas\Config\Config(array(
             'metrics' => array(
                 'rollingStatisticalWindowInMilliseconds' => 10000,
                 'rollingStatisticalWindowBuckets' => 10,
@@ -34,15 +37,6 @@ class CommandMetricsFactoryTest extends \PHPUnit_Framework_TestCase
         ));
         $factory = new CommandMetricsFactory(new ArrayStateStorage());
         $metrics = $factory->get('TestCommand', $config);
-        $this->assertAttributeEquals(2000, 'healthSnapshotIntervalInMilliseconds', $metrics);
-
-        $reflection = new \ReflectionClass('Odesk\Phystrix\CommandMetrics');
-        $property = $reflection->getProperty('counter');
-        $property->setAccessible(true);
-        $counter = $property->getValue($metrics);
-        $this->assertAttributeEquals('TestCommand', 'commandKey', $counter);
-        $this->assertAttributeEquals(10000, 'rollingStatisticalWindowInMilliseconds', $counter);
-        $this->assertAttributeEquals(10, 'rollingStatisticalWindowBuckets', $counter);
-        $this->assertAttributeEquals(1000, 'bucketInMilliseconds', $counter); // 10000 / 10 = 1000
+        $this->assertSame(2000, $metrics->getHealthSnapshotIntervalInMilliseconds());
     }
 }

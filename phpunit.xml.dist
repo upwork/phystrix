@@ -7,7 +7,6 @@
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
          forceCoversAnnotation="false"
-         mapTestClassNameToCoveredClassName="false"
          processIsolation="false"
          stopOnError="false"
          stopOnFailure="false"
@@ -23,14 +22,13 @@
     <ini name="memory_limit" value="-1"/>
   </php>
 
-  <filter>
-    <blacklist>
+  <coverage>
+    <include>
+      <directory suffix=".php">./library</directory>
+    </include>
+    <exclude>
       <directory>./vendor</directory>
       <directory>./tests/</directory>
-    </blacklist>
-    <whitelist processUncoveredFilesFromWhitelist="true">
-      <directory suffix=".php">./library</directory>
-    </whitelist>
-  </filter>
-
+    </exclude>
+  </coverage>
 </phpunit>

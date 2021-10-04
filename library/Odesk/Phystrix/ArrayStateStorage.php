@@ -50,9 +50,7 @@ class ArrayStateStorage implements StateStorageInterface
      */
     public function getBucket($commandKey, $type, $index)
     {
-        return isset($this->buckets[$commandKey][$type][$index])
-            ? $this->buckets[$commandKey][$type][$index]
-            : null;
+        return $this->buckets[$commandKey][$type][$index] ?? null;
     }
 
     /**
